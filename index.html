@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brijesh Babu K - Network Security & Python Portfolio</title>
+    <title>Brijesh Babu K - Offensive Security Matrix</title>
     <!-- Load Tailwind CSS for modern, responsive styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Set default font to Inter -->
@@ -11,9 +11,10 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #1a202c; /* Dark background */
-            color: #cbd5e1; /* Light text */
+            background-color: #000000; /* Pure Black Background */
+            color: #f0f0f0; /* Off-White Text */
             transition: background-color 0.5s;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
         }
         /* Custom styles for the interactive terminal section */
         #terminal-output {
@@ -23,63 +24,87 @@
             line-height: 1.5;
             background-color: #000;
         }
-        /* Custom color classes for the terminal output */
-        .text-neon-green { color: #4ade80; } /* Neon Green for prompt */
-        .text-red-accent { color: #ff6347; } /* Tomato Red for emphasis */
-        .text-red-error { color: #f87171; }
+        /* Canvas is fixed, full screen, and sits behind all content */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -10; /* Ensures it is behind the main content */
+        }
         
-        /* Custom utility for subtle hover effects - adjusted to red accent */
+        /* Custom Monochrome Colors */
+        .text-accent { color: #ffffff; } /* Primary Accent: White */
+        .text-error { color: #ff0000; }  /* Error: Red (for high visibility) */
+        .text-terminal-green { color: #00ff41; } /* Classic Terminal Green */
+        
+        /* Custom utility for subtle hover effects - now uses a crisp white shadow */
         .card-hover:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(255, 99, 71, 0.2), 0 4px 6px -2px rgba(255, 99, 71, 0.1);
+            box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -2px rgba(255, 255, 255, 0.05);
         }
-        /* Red Team Gradient for Heading */
-        .red-team-gradient {
-            background-image: linear-gradient(to right, #ff6347, #ff1493); /* Tomato to Deep Pink */
+        /* Monochrome Gradient for Heading */
+        .mono-gradient {
+            background-image: linear-gradient(to right, #ffffff, #aaaaaa); 
+        }
+        /* New loading bar animation for UI enhancement */
+        @keyframes loading-dots {
+            0%, 20% { content: "."; }
+            40% { content: ".."; }
+            60%, 100% { content: "..."; }
+        }
+        .loading-animation::after {
+            content: "";
+            animation: loading-dots 2s infinite;
+            display: inline-block;
+            width: 1em;
+            text-align: left;
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- Header and Navigation (Darker for contrast) -->
-    <header class="bg-[#10141c] shadow-2xl fixed top-0 left-0 w-full z-10 border-b border-gray-700">
+    <!-- BACKGROUND CANVAS (Mouse Reactive Matrix) -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- Header and Navigation -->
+    <header class="bg-[#0a0a0a] shadow-2xl fixed top-0 left-0 w-full z-10 border-b border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <!-- Name/Logo with Neon Gradient -->
+                <!-- Name/Logo with Monochrome Gradient -->
                 <div class="flex-shrink-0">
-                    <span class="text-2xl font-extrabold text-transparent bg-clip-text red-team-gradient">
+                    <span class="text-2xl font-extrabold text-transparent bg-clip-text mono-gradient">
                         Brijesh K.
                     </span>
                 </div>
                 <!-- Navigation -->
                 <nav class="hidden md:flex space-x-8">
-                    <a href="#about" class="text-gray-300 hover:text-red-accent transition duration-300 font-medium">About</a>
-                    <a href="#skills" class="text-gray-300 hover:text-red-accent transition duration-300 font-medium">Skills</a>
-                    <a href="#experience" class="text-gray-300 hover:text-red-accent transition duration-300 font-medium">Experience</a>
-                    <a href="#projects" class="text-gray-300 hover:text-red-accent transition duration-300 font-medium">Projects</a>
-                    <a href="https://www.linkedin.com/in/brijeshbabusk" target="_blank" class="text-gray-300 hover:text-neon-green transition duration-300 font-medium">LinkedIn</a>
+                    <a href="#about" class="text-gray-300 hover:text-white transition duration-300 font-medium">About</a>
+                    <a href="#skills" class="text-gray-300 hover:text-white transition duration-300 font-medium">Skills</a>
+                    <a href="#experience" class="text-gray-300 hover:text-white transition duration-300 font-medium">Experience</a>
+                    <a href="#projects" class="text-gray-300 hover:text-white transition duration-300 font-medium">Projects</a>
+                    <a href="https://www.linkedin.com/in/brijeshbabusk" target="_blank" class="text-gray-300 hover:text-terminal-green transition duration-300 font-medium">LinkedIn</a>
                 </nav>
             </div>
         </div>
     </header>
 
     <main class="pt-20">
-        <!-- Hero Section (More dramatic text) -->
+        <!-- Hero Section (High Contrast) -->
         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
             <div class="max-w-4xl mx-auto">
-                <p class="text-sm font-semibold text-neon-green uppercase tracking-widest mb-3 animate-pulse">
+                <p class="text-sm font-semibold text-terminal-green uppercase tracking-widest mb-3 animate-pulse">
                     <svg class="w-4 h-4 inline mr-2 align-text-bottom" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM6.621 6.621a2 2 0 102.828 2.828L15.364 9.636a2 2 0 00-2.828-2.828L6.621 6.621z" clip-rule="evenodd"></path></svg>
                     SECURITY RESEARCHER | ECE STUDENT
                 </p>
-                <!-- UPDATED HEADING -->
+                <!-- Monochrome Gradient Heading -->
                 <h1 class="text-6xl sm:text-7xl lg:text-8xl font-extrabold text-white leading-tight mb-6">
-                    <span class="text-transparent bg-clip-text red-team-gradient">Red Team</span> Offensive Matrix
+                    <span class="text-transparent bg-clip-text mono-gradient">Red Team</span> Offensive Matrix
                 </h1>
-                <!-- UPDATED SUBHEADING TEXT -->
+                <!-- Subheading -->
                 <p class="text-xl sm:text-2xl text-gray-400 mb-10">
                     Applying offensive security principles to **Packet Analysis**, **Python-based Automation**, and **Embedded System** vulnerability research.
                 </p>
-                <a href="#contact" class="inline-flex items-center justify-center px-10 py-3 border border-transparent text-lg font-semibold rounded-full shadow-2xl text-gray-900 bg-red-accent hover:bg-red-500 transition duration-300 transform hover:scale-105 shadow-red-500/50">
+                <a href="#contact" class="inline-flex items-center justify-center px-10 py-3 border border-transparent text-lg font-semibold rounded-full shadow-lg text-black bg-white hover:bg-gray-300 transition duration-300 transform hover:scale-105 shadow-white/50">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     Collaborate Now
                 </a>
@@ -88,14 +113,14 @@
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
             <!-- About Section with Terminal -->
-            <section id="about" class="bg-[#2d3748] shadow-2xl rounded-3xl p-8 lg:p-12 border border-gray-700">
-                <h2 class="text-3xl font-bold mb-8 border-b border-gray-600 pb-4">
-                    <span class="text-red-accent font-mono">~$</span> Profile Overview
+            <section id="about" class="bg-[#111111] shadow-2xl rounded-3xl p-8 lg:p-12 border border-gray-800">
+                <h2 class="text-3xl font-bold mb-8 border-b border-gray-700 pb-4">
+                    <span class="text-white font-mono">~$</span> Profile Overview
                 </h2>
                 <div class="grid md:grid-cols-2 gap-10 items-center">
                     <div>
                         <p class="text-lg text-gray-300 mb-4">
-                            I am currently pursuing my B.E. in Electronics and Communication Engineering at R.M.K. Engineering College. My focus is on the intersection of hardware, signals, and security, driven by a desire to build <strong class="text-neon-green">robust and secure systems</strong>.
+                            I am currently pursuing my B.E. in Electronics and Communication Engineering at R.M.K. Engineering College. My focus is on the intersection of hardware, signals, and security, driven by a desire to build <strong class="text-terminal-green">robust and secure systems</strong>.
                         </p>
                         <p class="text-lg text-gray-300 mb-4">
                             My project work spans from developing high-level **Python APIs (FastAPI)** to low-level signal processing with **BladeRF SDR** and conducting critical network analyses using **mitmproxy** and **Wireshark**.
@@ -104,23 +129,23 @@
                             I thrive on challenges that require both software proficiency and hardware understanding, particularly in real-time data analysis and security research.
                         </p>
                     </div>
-                    <!-- Interactive Command Line / Terminal Simulation -->
-                    <div class="bg-black p-6 rounded-xl shadow-inner shadow-red-accent/20">
-                        <div class="flex justify-between items-center text-gray-400 mb-4">
-                            <span class="text-sm font-mono text-red-accent">brijesh@portfolio:~</span>
+                    <!-- Interactive Command Line / Terminal Simulation (Classic Green on Black) -->
+                    <div class="bg-black p-6 rounded-xl shadow-inner shadow-white/10 border border-gray-700">
+                        <div class="flex justify-between items-center text-gray-600 mb-4">
+                            <span class="text-sm font-mono text-white">brijesh@portfolio:~</span>
                             <div class="flex space-x-1">
-                                <span class="h-3 w-3 bg-red-500 rounded-full"></span>
-                                <span class="h-3 w-3 bg-yellow-500 rounded-full"></span>
-                                <span class="h-3 w-3 bg-green-500 rounded-full"></span>
+                                <span class="h-3 w-3 bg-white rounded-full opacity-30"></span>
+                                <span class="h-3 w-3 bg-white rounded-full opacity-50"></span>
+                                <span class="h-3 w-3 bg-white rounded-full opacity-70"></span>
                             </div>
                         </div>
-                        <div id="terminal-output" class="text-sm font-mono text-neon-green p-2">
-                            <span class="text-red-accent">// System ready.</span><br>
-                            <span class="text-red-accent">// Type 'help' and hit enter below.</span><br>
+                        <div id="terminal-output" class="text-sm font-mono text-terminal-green p-2">
+                            <span class="text-white">// System ready.</span><br>
+                            <span class="text-white loading-animation">// Initializing console</span><br>
                         </div>
                         <div id="terminal-prompt-container" class="flex items-center mt-2">
-                            <span id="prompt" class="text-neon-green font-mono text-sm mr-1">brijesh@local:~ $ </span>
-                            <input type="text" id="terminal-input" class="w-full bg-transparent text-gray-200 border-none outline-none font-mono text-sm" autofocus>
+                            <span id="prompt" class="text-terminal-green font-mono text-sm mr-1">brijesh@local:~ $ </span>
+                            <input type="text" id="terminal-input" class="w-full bg-transparent text-white border-none outline-none font-mono text-sm" autofocus>
                         </div>
                     </div>
                 </div>
@@ -129,13 +154,13 @@
             <!-- Skills Section -->
             <section id="skills" class="py-12">
                 <h2 class="text-3xl font-bold mb-10 border-b border-gray-700 pb-4 text-center">
-                    <span class="text-neon-green font-mono">0110.</span> Core Competencies
+                    <span class="text-terminal-green font-mono">0110.</span> Core Competencies
                 </h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     
                     <!-- Skill Card 1: Networking & Security -->
-                    <div class="p-6 bg-[#2d3748] rounded-xl shadow-xl border border-gray-700 transition duration-500 card-hover">
-                        <p class="text-4xl mb-3 text-red-accent">
+                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover">
+                        <p class="text-4xl mb-3 text-white">
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.007 12.007 0 002.944 12c0 1.259.231 2.497.661 3.676A11.99 11.99 0 0012 21.056a11.99 11.99 0 008.395-4.882c.43-.918.661-1.957.661-3.04a12.007 12.007 0 00-.374-4.04z"></path></svg>
                         </p>
                         <h3 class="font-bold text-xl text-white mb-3">Network Security</h3>
@@ -148,8 +173,8 @@
                     </div>
 
                     <!-- Skill Card 2: Programming & Scripting -->
-                    <div class="p-6 bg-[#2d3748] rounded-xl shadow-xl border border-gray-700 transition duration-500 card-hover">
-                        <p class="text-4xl mb-3 text-neon-green">🐍</p>
+                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover">
+                        <p class="text-4xl mb-3 text-terminal-green">🐍</p>
                         <h3 class="font-bold text-xl text-white mb-3">Python & APIs</h3>
                         <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
                             <li>Python (Fluent)</li>
@@ -160,8 +185,8 @@
                     </div>
 
                     <!-- Skill Card 3: Hardware & SDR -->
-                    <div class="p-6 bg-[#2d3748] rounded-xl shadow-xl border border-gray-700 transition duration-500 card-hover">
-                        <p class="text-4xl mb-3 text-yellow-400">📡</p>
+                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover">
+                        <p class="text-4xl mb-3 text-white">📡</p>
                         <h3 class="font-bold text-xl text-white mb-3">SDR & Embedded</h3>
                         <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
                             <li>BladeRF Micro 2.0 XA4</li>
@@ -172,8 +197,8 @@
                     </div>
 
                     <!-- Skill Card 4: Data & Systems -->
-                    <div class="p-6 bg-[#2d3748] rounded-xl shadow-xl border border-gray-700 transition duration-500 card-hover">
-                        <p class="text-4xl mb-3 text-fuchsia-400">🖥️</p>
+                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover">
+                        <p class="text-4xl mb-3 text-white">🖥️</p>
                         <h3 class="font-bold text-xl text-white mb-3">Data & Operating Systems</h3>
                         <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
                             <li>Data Visualization (Matplotlib)</li>
@@ -185,19 +210,19 @@
                 </div>
             </section>
             
-            <!-- Experience Section (NEW) -->
+            <!-- Experience Section -->
             <section id="experience" class="py-12">
                 <h2 class="text-3xl font-bold mb-10 border-b border-gray-700 pb-4 text-center">
-                    <span class="text-red-accent font-mono">02.</span> Professional Experience
+                    <span class="text-white font-mono">02.</span> Professional Experience
                 </h2>
                 
                 <div class="space-y-8 max-w-4xl mx-auto">
                     <!-- Internship 1: Precision Infomatic -->
-                    <div class="relative pl-10 border-l-2 border-neon-green">
-                        <div class="absolute w-4 h-4 rounded-full bg-neon-green -left-2 top-0"></div>
-                        <div class="bg-[#2d3748] p-6 rounded-xl shadow-2xl transition duration-500 card-hover">
+                    <div class="relative pl-10 border-l-2 border-terminal-green">
+                        <div class="absolute w-4 h-4 rounded-full bg-terminal-green -left-2 top-0"></div>
+                        <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-800">
                             <h3 class="text-2xl font-semibold text-white">Intern - Precision Infomatic</h3>
-                            <p class="text-sm text-gray-400 mb-3">June 2025 - July 2025 | Chennai</p>
+                            <p class="text-sm text-gray-500 mb-3">June 2025 - July 2025 | Chennai</p>
                             <ul class="list-disc list-inside text-gray-300 space-y-2">
                                 <li>Gained practical exposure to **biometrics-focused projects** with hands-on technical training.</li>
                                 <li>Developed skills in **embedded systems integration** and applying security principles to real-world hardware.</li>
@@ -206,11 +231,11 @@
                     </div>
                     
                     <!-- Internship 2: Nirloba IT Pvt Ltd -->
-                    <div class="relative pl-10 border-l-2 border-red-accent">
-                        <div class="absolute w-4 h-4 rounded-full bg-red-accent -left-2 top-0"></div>
-                        <div class="bg-[#2d3748] p-6 rounded-xl shadow-2xl transition duration-500 card-hover">
+                    <div class="relative pl-10 border-l-2 border-white">
+                        <div class="absolute w-4 h-4 rounded-full bg-white -left-2 top-0"></div>
+                        <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-800">
                             <h3 class="text-2xl font-semibold text-white">Intern - Nirloba IT Pvt Ltd</h3>
-                            <p class="text-sm text-gray-400 mb-3">May 2024 - June 2024</p>
+                            <p class="text-sm text-gray-500 mb-3">May 2024 - June 2024</p>
                             <ul class="list-disc list-inside text-gray-300 space-y-2">
                                 <li>Focused on **embedded systems exposure** through structured project-based learning.</li>
                                 <li>Practiced core concepts of **hardware-software integration** and system programming fundamentals.</li>
@@ -223,48 +248,48 @@
             <!-- Projects Section -->
             <section id="projects" class="py-12">
                 <h2 class="text-3xl font-bold mb-10 border-b border-gray-700 pb-4 text-center">
-                    <span class="text-neon-green font-mono">03.</span> Key Technical Projects
+                    <span class="text-terminal-green font-mono">03.</span> Key Technical Projects
                 </h2>
 
                 <!-- Project Grid -->
                 <div class="grid md:grid-cols-3 gap-8">
                     <!-- Project 1: Menaminiki AI -->
-                    <div class="bg-[#2d3748] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-700">
-                        <p class="text-4xl text-red-accent mb-3">🤖</p>
+                    <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-800">
+                        <p class="text-4xl text-white mb-3">🤖</p>
                         <h3 class="text-xl font-semibold text-white mb-2">Menaminiki AI Chatbot</h3>
                         <p class="text-xs text-gray-500 font-medium mb-3">Python | FastAPI | MongoDB Atlas</p>
                         <p class="text-gray-400 mb-4 text-sm">
                             A cross-platform food/recipe chatbot using **FastAPI** for API development and **MongoDB Atlas** for data persistence. Demonstrates API expertise and Linux-native deployment.
                         </p>
-                        <a href="https://github.com/Brijeshzzz" target="_blank" class="text-sm font-medium text-neon-green hover:text-green-300 transition duration-300 flex items-center">
+                        <a href="https://github.com/Brijeshzzz" target="_blank" class="text-sm font-medium text-terminal-green hover:text-white transition duration-300 flex items-center">
                             View Code
                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                         </a>
                     </div>
 
                     <!-- Project 2: Remote Sensing using SDR -->
-                    <div class="bg-[#2d3748] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-700">
-                        <p class="text-4xl text-neon-green mb-3">📡</p>
+                    <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-800">
+                        <p class="text-4xl text-terminal-green mb-3">📡</p>
                         <h3 class="text-xl font-semibold text-white mb-2">SDR Remote Sensing</h3>
                         <p class="text-xs text-gray-500 font-medium mb-3">BladeRF Micro | I/Q Signal | Deep Learning</p>
                         <p class="text-gray-400 mb-4 text-sm">
                             Implemented fire, smoke, and motion detection using the **BladeRF SDR** by analyzing raw **I/Q sample data**. Focuses on signal processing, feature extraction, and classification.
                         </p>
-                        <a href="https://github.com/Brijeshzzz" target="_blank" class="text-sm font-medium text-neon-green hover:text-green-300 transition duration-300 flex items-center">
+                        <a href="https://github.com/Brijeshzzz" target="_blank" class="text-sm font-medium text-terminal-green hover:text-white transition duration-300 flex items-center">
                             View Code
                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                         </a>
                     </div>
 
                     <!-- Project 3: HTTPS Monitoring & Decryption -->
-                    <div class="bg-[#2d3748] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-700">
-                        <p class="text-4xl text-yellow-400 mb-3">🔓</p>
+                    <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-800">
+                        <p class="text-4xl text-white mb-3">🔓</p>
                         <h3 class="text-xl font-semibold text-white mb-2">HTTPS Traffic Decryption</h3>
                         <p class="text-xs text-gray-500 font-medium mb-3">mitmproxy | Wireshark | SSL/TLS</p>
                         <p class="text-gray-400 mb-4 text-sm">
                             Security research demonstrating interception and decryption of HTTPS traffic using **Kali Linux** and **mitmproxy**, including **SSLKEYLOGFILE** for deep packet inspection.
                         </p>
-                        <a href="https://github.com/Brijeshzzz" target="_blank" class="text-sm font-medium text-neon-green hover:text-green-300 transition duration-300 flex items-center">
+                        <a href="https://github.com/Brijeshzzz" target="_blank" class="text-sm font-medium text-terminal-green hover:text-white transition duration-300 flex items-center">
                             View Code
                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                         </a>
@@ -273,7 +298,7 @@
             </section>
 
             <!-- Contact Section -->
-            <section id="contact" class="py-12 text-center bg-[#2d3748] rounded-2xl shadow-2xl p-8 border border-gray-700">
+            <section id="contact" class="py-12 text-center bg-[#111111] rounded-2xl shadow-2xl p-8 border border-gray-800">
                 <h2 class="text-3xl font-bold text-white mb-4">
                     Let's Connect and Secure the Future
                 </h2>
@@ -281,11 +306,11 @@
                     I am actively seeking internships and collaborative research opportunities. Reach out to discuss how my skills in Python and Network Security can contribute to your team.
                 </p>
                 <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-                    <a href="mailto:skbrijeshbabu20@gmail.com" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-semibold rounded-full shadow-lg text-gray-900 bg-red-accent hover:bg-red-500 transition duration-300 transform hover:scale-105">
+                    <a href="mailto:skbrijeshbabu20@gmail.com" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-semibold rounded-full shadow-lg text-black bg-white hover:bg-gray-300 transition duration-300 transform hover:scale-105">
                         <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg>
                         Email Me
                     </a>
-                    <a href="https://www.linkedin.com/in/brijeshbabusk" target="_blank" class="inline-flex items-center justify-center px-8 py-3 border-2 border-red-accent text-base font-semibold rounded-full shadow-lg text-red-accent bg-transparent hover:bg-red-900/50 transition duration-300 transform hover:scale-105">
+                    <a href="https://www.linkedin.com/in/brijeshbabusk" target="_blank" class="inline-flex items-center justify-center px-8 py-3 border-2 border-white text-base font-semibold rounded-full shadow-lg text-white bg-transparent hover:bg-gray-800 transition duration-300 transform hover:scale-105">
                         <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.364-4-3.298-4 0v5.604h-3v-11h3v1.765c1.395-2.348 5-2.316 5 2.504v6.731z"/></svg>
                         LinkedIn Profile
                     </a>
@@ -297,26 +322,153 @@
     <!-- Footer -->
     <footer class="bg-black text-gray-500 py-6 mt-16 border-t border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
-            &copy; 2025 Brijesh Babu K. All Rights Reserved. | Designed with <span class="text-red-500">❤️</span> and Hosted on <a href="https://pages.github.com/" target="_blank" class="text-red-accent hover:text-neon-green transition duration-300">GitHub Pages</a>
+            &copy; 2025 Brijesh Babu K. All Rights Reserved. | Designed with <span class="text-white">⚪</span> and Hosted on <a href="https://pages.github.com/" target="_blank" class="text-white hover:text-terminal-green transition duration-300">GitHub Pages</a>
         </div>
     </footer>
 
-    <!-- Terminal Script (JavaScript) -->
+    <!-- Canvas and Terminal Scripts (JavaScript) -->
     <script>
+        // --- Particle Matrix Background Script ---
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        
+        // Mouse position variables
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        // Particle colors matched to the monochrome theme
+        const PARTICLE_COLOR = '#ffffff'; // White for particles
+        
+        let particles = [];
+        
+        // Particle Class
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 2 + 0.5;
+                // INCREASED AMBIENT SPEED (from 0.5 to 1.0)
+                this.speedX = Math.random() * 1.0 - 0.5; 
+                this.speedY = Math.random() * 1.0 - 0.5;
+            }
+
+            // Update position (bounce off edges)
+            update() {
+                // --- Start Mouse Interaction Logic (The "Shake" Effect) ---
+                const dxToMouse = this.x - mouseX;
+                const dyToMouse = this.y - mouseY;
+                const distance = Math.sqrt(dxToMouse * dxToMouse + dyToMouse * dyToMouse);
+                const repulsionRadius = 100; // INCREASED REACTION RADIUS (from 75 to 100)
+                const repulsionStrength = 5.0; // INCREASED REPULSION STRENGTH (from 2.5 to 5.0)
+                
+                if (distance < repulsionRadius) {
+                    const angle = Math.atan2(dyToMouse, dxToMouse);
+                    // Calculate force inversely proportional to distance (stronger close up)
+                    const force = (repulsionRadius - distance) / repulsionRadius * repulsionStrength;
+                    
+                    // Apply movement away from the mouse
+                    this.x += Math.cos(angle) * force;
+                    this.y += Math.sin(angle) * force;
+                }
+                // --- End Mouse Interaction Logic ---
+
+                // Standard boundary movement
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x < 0 || this.x > width) this.speedX *= -1;
+                if (this.y < 0 || this.y > height) this.speedY *= -1;
+            }
+
+            // Draw the particle
+            draw() {
+                ctx.fillStyle = PARTICLE_COLOR;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Initialize particle array
+        function initCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            // Responsive particle count: fewer particles on smaller screens
+            const PARTICLE_COUNT = Math.floor((width * height) / 10000); 
+            particles = [];
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        // Draw connections between nearby particles
+        function connect() {
+            const maxDistance = 150; // INCREASED CONNECTION DISTANCE (from 120 to 150)
+            
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a; b < particles.length; b++) {
+                    const dx = particles[a].x - particles[b].x;
+                    const dy = particles[a].y - particles[b].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < maxDistance) {
+                        // Line opacity fades with distance: stronger when closer
+                        const opacityValue = 1 - (distance / maxDistance);
+                        // Subtle white/gray lines on black background
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacityValue * 0.15})`; 
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        // Animation Loop
+        function animate() {
+            // Clear the canvas each frame
+            // Using a slight fade to black for a subtle "trace" effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; 
+            ctx.fillRect(0, 0, width, height); 
+            
+            connect();
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+        
+        // --- Event Listeners ---
+        
+        // Track mouse movement
+        window.addEventListener('mousemove', (event) => {
+            mouseX = event.x;
+            mouseY = event.y;
+        });
+
+        // Handle resize event
+        window.addEventListener('resize', initCanvas);
+
+        // --- Terminal Script Logic ---
         const output = document.getElementById('terminal-output');
         const input = document.getElementById('terminal-input');
+        const loadingElement = document.querySelector('.loading-animation');
         const user = 'brijesh';
         const hostname = 'portfolio';
         const path = '~';
 
         const commands = {
-            'help': 'Available commands: <span class="text-red-accent">about</span>, <span class="text-red-accent">skills</span>, <span class="text-red-accent">experience</span>, <span class="text-red-accent">projects</span>, <span class="text-red-accent">contact</span>, <span class="text-red-accent">clear</span>',
+            'help': 'Available commands: <span class="text-white">about</span>, <span class="text-white">skills</span>, <span class="text-white">experience</span>, <span class="text-white">projects</span>, <span class="text-white">contact</span>, <span class="text-white">clear</span>',
             'about': 'B.E. ECE student with deep expertise in Python, Network Security, and Embedded Systems. Based in Chennai.',
             'skills': 'Primary stack: Python, Wireshark, mitmproxy, Scapy, BladeRF SDR, Linux/Kali, Zeek Logs/ELK.',
             'experience': 'Internships at Precision Infomatic (Biometrics/Embedded) and Nirloba IT Pvt Ltd (H/W-S/W Integration).',
             'projects': 'Key projects: Menaminiki AI (FastAPI), SDR Remote Sensing, and HTTPS Traffic Decryption. Scroll up for links.',
-            'contact': 'Email: <span class="text-neon-green">skbrijeshbabu20@gmail.com</span> | LinkedIn: <span class="text-neon-green">brijeshbabusk</span>',
-            'ls': '<span class="text-red-accent">about.txt</span> <span class="text-red-accent">skills.sh</span> <span class="text-red-accent">projects.list</span> <span class="text-red-accent">experience/</span> <span class="text-red-accent">contact.txt</span>',
+            'contact': 'Email: <span class="text-terminal-green">skbrijeshbabu20@gmail.com</span> | LinkedIn: <span class="text-terminal-green">brijeshbabusk</span>',
+            'ls': '<span class="text-white">about.txt</span> <span class="text-white">skills.sh</span> <span class="text-white">projects.list</span> <span class="text-white">experience/</span> <span class="text-white">contact.txt</span>',
             'whoami': user,
             'whereami': hostname,
         };
@@ -333,34 +485,53 @@
             input.value = '';
 
             // Echo command
-            addLine(`<span class="text-neon-green">${user}@${hostname}</span>:<span class="text-red-accent">${path}</span>$ ${command}`);
+            addLine(`<span class="text-terminal-green">${user}@${hostname}</span>:<span class="text-white">${path}</span>$ ${command}`);
 
             const lowerCommand = command.toLowerCase();
 
             if (lowerCommand === 'clear') {
                 output.innerHTML = '';
-                addLine('<span class="text-red-accent">// System ready.</span>');
-                addLine('<span class="text-red-accent">// Type \'help\' and hit enter below.</span>');
+                addLine('<span class="text-white">// System ready.</span>');
+                addLine('<span class="text-white">// Type \'help\' and hit enter below.</span>');
             } else if (commands[lowerCommand]) {
                 addLine(commands[lowerCommand]);
             } else if (command === '') {
                 // Do nothing
             } else {
-                addLine(`<span class="text-red-error">Error: Command not found: ${command}. Type 'help' for available commands.</span>`);
+                addLine(`<span class="text-error">Error: Command not found: ${command}. Type 'help' for available commands.</span>`);
             }
         }
+        
+        // Initial console animation logic
+        let initializationDone = false;
+        function completeInitialization() {
+             if (loadingElement) {
+                loadingElement.remove();
+            }
+            addLine('<span class="text-white">// Initialization complete.</span>');
+            addLine('<span class="text-white">// Type \'help\' and hit enter below.</span>');
+            initializationDone = true;
+        }
+
 
         input.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
+            if (event.key === 'Enter' && initializationDone) {
                 executeCommand();
             }
         });
 
-        // Initialize terminal output and focus input
+        // Initialize Canvas and Terminal on window load
         window.onload = function() {
-            addLine('<span class="text-red-accent">// System ready.</span>');
-            addLine('<span class="text-red-accent">// Type \'help\' and hit enter below.</span>');
-            input.focus();
+            initCanvas(); // Initialize particle canvas
+            animate();    // Start particle animation
+
+            // Terminal initialization delay for UI effect
+            setTimeout(completeInitialization, 2000); 
+
+            // Initialize terminal
+            if (output && input) {
+                input.focus();
+            }
         };
 
         // Re-focus the input if the user clicks anywhere else
