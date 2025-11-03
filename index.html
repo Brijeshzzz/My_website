@@ -244,7 +244,8 @@
                     </div>
                     <!-- Interactive Command Line / Terminal Simulation (Classic Green on Black) --><div class="bg-black p-6 rounded-xl shadow-inner shadow-white/10 border border-gray-700 animate-fade-in-up" style="animation-delay: 0.4s;">
                         <div class="flex justify-between items-center text-gray-600 mb-4">
-                            <span class="text-sm font-mono text-white">brijesh@portfolio:~</span>
+                            <!-- FIX: Changed header prompt from portfolio to aboutme -->
+                            <span class="text-sm font-mono text-white">brijesh@aboutme:~</span>
                             <div class="flex space-x-1">
                                 <span class="h-3 w-3 bg-white rounded-full opacity-30"></span>
                                 <span class="h-3 w-3 bg-white rounded-full opacity-50"></span>
@@ -258,8 +259,8 @@
                         
                         <!-- FIX: Applied Tailwind classes to prevent wrapping -->
                         <div id="terminal-prompt-container" class="flex items-center mt-2 whitespace-nowrap">
-                            <!-- FIX: Prompt is single-line and red -->
-                            <span id="prompt" class="text-terminal-red font-mono text-sm">brijesh@local:~ $ </span>
+                            <!-- FIX: Prompt is single-line and red, will use JS variable -->
+                            <span id="prompt" class="text-terminal-red font-mono text-sm">brijesh@aboutme:~ $ </span>
                             <input type="text" id="terminal-input" class="w-full bg-transparent text-white border-none outline-none font-mono text-sm" autofocus>
                         </div>
                     </div>
@@ -580,7 +581,8 @@
         const input = document.getElementById('terminal-input');
         const loadingElement = document.querySelector('.loading-animation');
         const user = 'brijesh';
-        const hostname = 'local'; // Changed from portfolio to local to match your screenshot
+        // FIX: Change hostname to 'aboutme'
+        const hostname = 'aboutme'; 
         const path = '~';
 
         const commands = {
