@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brijesh Babu K - Offensive Security Matrix</title>
     <!-- Load Tailwind CSS for modern, responsive styling --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Font Awesome for crisp icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Set default font to Inter --><style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
@@ -59,6 +60,8 @@
         .text-accent { color: #ffffff; } /* Primary Accent: White */
         .text-error { color: #ff0000; }  /* Error: Red (for high visibility) */
         .text-terminal-green { color: #00ff41; } /* Classic Terminal Green */
+        /* NEW: Red Terminal Text Color */
+        .text-terminal-red { color: #ff0041; } 
         
         /* Custom utility for subtle hover effects - now uses a crisp white shadow */
         .card-hover:hover {
@@ -133,6 +136,20 @@
             animation: fade-in 0.8s ease-out forwards;
             opacity: 0;
         }
+
+        /* FIX: Prevent input from wrapping inside the terminal prompt */
+        #terminal-input {
+            flex-grow: 1; /* Allows input to take up available space */
+            min-width: 0; /* Prevents overflow that causes wrapping */
+            box-sizing: border-box; /* Include padding/border in element's total width */
+        }
+        /* FIX: Ensure the entire prompt container stays on one line */
+        #terminal-prompt-container {
+             display: flex;
+             align-items: center;
+             white-space: nowrap;
+             overflow: hidden; /* Hide any overflow if necessary */
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -147,12 +164,17 @@
                         Brijesh K.
                     </span>
                 </div>
-                <!-- Navigation --><nav class="hidden md:flex space-x-8">
+                <!-- Navigation -->
+                <nav class="hidden md:flex space-x-8">
                     <a href="#about" class="text-gray-300 hover:text-white transition duration-300 font-medium">About</a>
                     <a href="#skills" class="text-gray-300 hover:text-white transition duration-300 font-medium">Skills</a>
                     <a href="#experience" class="text-gray-300 hover:text-white transition duration-300 font-medium">Experience</a>
                     <a href="#projects" class="text-gray-300 hover:text-white transition duration-300 font-medium">Projects</a>
-                    <a href="https://www.linkedin.com/in/brijeshbabusk" target="_blank" class="text-gray-300 hover:text-terminal-green transition duration-300 font-medium">LinkedIn</a>
+                    <!-- FIX: Using Font Awesome icon for crispness -->
+                    <a href="https://www.linkedin.com/in/brijeshbabusk" target="_blank" class="text-gray-300 hover:text-terminal-green transition duration-300 font-medium flex items-center">
+                        <i class="fab fa-linkedin-in w-5 h-5 mr-1 flex items-center justify-center"></i>
+                        LinkedIn
+                    </a>
                 </nav>
             </div>
         </div>
@@ -233,8 +255,11 @@
                             <span class="text-white">// System ready.</span><br>
                             <span class="text-white loading-animation">// Initializing console</span><br>
                         </div>
-                        <div id="terminal-prompt-container" class="flex items-center mt-2">
-                            <span id="prompt" class="text-terminal-green font-mono text-sm mr-1">brijesh@local:~ $ </span>
+                        
+                        <!-- FIX: Applied Tailwind classes to prevent wrapping -->
+                        <div id="terminal-prompt-container" class="flex items-center mt-2 whitespace-nowrap">
+                            <!-- FIX: Prompt is single-line and red -->
+                            <span id="prompt" class="text-terminal-red font-mono text-sm">brijesh@local:~ $ </span>
                             <input type="text" id="terminal-input" class="w-full bg-transparent text-white border-none outline-none font-mono text-sm" autofocus>
                         </div>
                     </div>
@@ -386,8 +411,9 @@
                         <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg>
                         Email Me
                     </a>
+                    <!-- FIX: Using Font Awesome icon for crispness -->
                     <a href="https://www.linkedin.com/in/brijeshbabusk" target="_blank" class="inline-flex items-center justify-center px-8 py-3 border-2 border-white text-base font-semibold rounded-full shadow-lg text-white bg-transparent hover:bg-gray-800 transition duration-300 transform hover:scale-105">
-                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.364-4-3.298-4 0v5.604h-3v-11h3v1.765c1.395-2.348 5-2.316 5 2.504v6.731z"/></svg>
+                        <i class="fab fa-linkedin-in w-5 h-5 mr-2 flex items-center justify-center"></i>
                         LinkedIn Profile
                     </a>
                 </div>
@@ -554,7 +580,7 @@
         const input = document.getElementById('terminal-input');
         const loadingElement = document.querySelector('.loading-animation');
         const user = 'brijesh';
-        const hostname = 'portfolio';
+        const hostname = 'local'; // Changed from portfolio to local to match your screenshot
         const path = '~';
 
         const commands = {
@@ -580,8 +606,8 @@
             const command = input.value.trim();
             input.value = '';
 
-            // Echo command
-            addLine(`<span class="text-terminal-green">${user}@${hostname}</span>:<span class="text-white">${path}</span>$ ${command}`);
+            // FIX: Outputting the command, color set to white for user input echo
+            addLine(`<span class="text-terminal-red">${user}@${hostname}</span>:<span class="text-terminal-red">${path}</span>$ <span class="text-white">${command}</span>`);
 
             const lowerCommand = command.toLowerCase();
 
