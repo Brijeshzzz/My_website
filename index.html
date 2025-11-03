@@ -13,7 +13,30 @@
             color: #f0f0f0; /* Off-White Text */
             transition: background-color 0.5s;
             overflow-x: hidden; /* Prevent horizontal scrolling */
+            position: relative; /* Needed for the noise overlay */
         }
+        /* NEW: Monochrome Noise Overlay for high-tech aesthetic */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.05; /* Very subtle noise */
+            z-index: -5;
+            /* Simple monochrome noise pattern (can be replaced by a texture if needed) */
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 1px,
+                #fff 1px,
+                #fff 2px
+            );
+            background-size: 100% 100%;
+        }
+
         /* Custom styles for the interactive terminal section */
         #terminal-output {
             max-height: 300px;
@@ -28,6 +51,8 @@
             top: 0;
             left: 0;
             z-index: -10; /* Ensures it is behind the main content */
+            /* NEW: GLOW EFFECT APPLIED TO CANVAS */
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
         }
         
         /* Custom Monochrome Colors */
@@ -392,26 +417,30 @@
                 this.x = Math.random() * width;
                 this.y = Math.random() * height;
                 this.size = Math.random() * 2 + 0.5;
-                // INCREASED AMBIENT SPEED
-                this.speedX = Math.random() * 1.5 - 0.75; // Even faster
-                this.speedY = Math.random() * 1.5 - 0.75; // Even faster
+                // Base ambient speed for continuous movement (Increased)
+                this.speedX = Math.random() * 2 - 1.0; 
+                this.speedY = Math.random() * 2 - 1.0; 
             }
 
             // Update position (bounce off edges)
             update() {
-                // --- Start Mouse Interaction Logic (The "Shake" Effect) ---
+                // --- Start Mouse Interaction Logic (PURE MAGNETIC ATTRACTION) ---
                 const dxToMouse = this.x - mouseX;
                 const dyToMouse = this.y - mouseY;
                 const distance = Math.sqrt(dxToMouse * dxToMouse + dyToMouse * dyToMouse);
-                const repulsionRadius = 120; // INCREASED REACTION RADIUS further (from 100 to 120)
-                const repulsionStrength = 7.0; // INCREASED REPULSION STRENGTH further (from 5.0 to 7.0)
-                
-                if (distance < repulsionRadius) {
-                    const angle = Math.atan2(dyToMouse, dxToMouse);
-                    const force = (repulsionRadius - distance) / repulsionRadius * repulsionStrength;
+                // FIX: Changed dxToToMouse to dxToMouse to resolve ReferenceError
+                const angle = Math.atan2(dyToMouse, dxToMouse); 
+
+                const attractionRadius = 300; // Large radius for attraction
+                const attractionStrength = 4.0; // INCREASED PULL STRENGTH
+
+                if (distance < attractionRadius) {
+                    // Attraction: Pull particles directly towards the mouse 
+                    const force = (attractionRadius - distance) / attractionRadius * attractionStrength;
                     
-                    this.x += Math.cos(angle) * force;
-                    this.y += Math.sin(angle) * force;
+                    // Subtract the force to move TOWARDS the mouse position
+                    this.x -= Math.cos(angle) * force;
+                    this.y -= Math.sin(angle) * force;
                 }
                 // --- End Mouse Interaction Logic ---
 
@@ -436,7 +465,8 @@
         function initCanvas() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
-            const PARTICLE_COUNT = Math.floor((width * height) / 8000); // More particles for a denser effect
+            // REDUCED DENSITY for a cleaner look
+            const PARTICLE_COUNT = Math.floor((width * height) / 12000); 
             particles = [];
             for (let i = 0; i < PARTICLE_COUNT; i++) {
                 particles.push(new Particle());
@@ -445,7 +475,7 @@
 
         // Draw connections between nearby particles
         function connect() {
-            const maxDistance = 180; // INCREASED CONNECTION DISTANCE further (from 150 to 180)
+            const maxDistance = 150; // REDUCED CONNECTION DISTANCE for sparser lines
             
             for (let a = 0; a < particles.length; a++) {
                 for (let b = a; b < particles.length; b++) {
@@ -455,8 +485,9 @@
 
                     if (distance < maxDistance) {
                         const opacityValue = 1 - (distance / maxDistance);
-                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacityValue * 0.25})`; // Slightly more visible lines
-                        ctx.lineWidth = 0.6; // Slightly thicker lines
+                        // Lines are slightly thinner and slightly more transparent for glow effect
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacityValue * 0.3})`; 
+                        ctx.lineWidth = 0.5; 
                         ctx.beginPath();
                         ctx.moveTo(particles[a].x, particles[a].y);
                         ctx.lineTo(particles[b].x, particles[b].y);
@@ -468,8 +499,8 @@
 
         // Animation Loop
         function animate() {
-            // Clear the canvas each frame with a stronger fade to black
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Stronger fade for more dynamic trails
+            // Clear the canvas each frame with a slightly weaker fade for longer trails
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; 
             ctx.fillRect(0, 0, width, height); 
             
             connect();
@@ -568,7 +599,7 @@
              if (loadingElement) {
                 loadingElement.remove();
             }
-            addLine('<span class="text-white">// Initialization complete.</span>');
+            addLine('<span class="text-white">// System ready.</span>');
             addLine('<span class="text-white">// Type \'help\' and hit enter below.</span>');
             initializationDone = true;
         }
