@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brijesh Babu K - Offensive Security Matrix</title>
-    <!-- Load Tailwind CSS for modern, responsive styling --><script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Font Awesome for crisp icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Set default font to Inter --><style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        /* --- General & Base Styles --- */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #000000; /* Pure Black Background */
@@ -16,7 +18,8 @@
             overflow-x: hidden; /* Prevent horizontal scrolling */
             position: relative; /* Needed for the noise overlay */
         }
-        /* NEW: Monochrome Noise Overlay for high-tech aesthetic */
+        
+        /* Monochrome Noise Overlay for high-tech aesthetic */
         body::before {
             content: '';
             position: fixed;
@@ -38,7 +41,24 @@
             background-size: 100% 100%;
         }
 
-        /* Custom styles for the interactive terminal section */
+        /* Custom Colors */
+        .text-accent { color: #ffffff; } 
+        .text-error { color: #ff0000; }  
+        .text-terminal-green { color: #00ff41; } /* Classic Terminal Green */
+        .text-terminal-red { color: #ff0041; } /* Red Terminal Text Color */
+        
+        /* Custom Hover Effect */
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -2px rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Monochrome Gradient for Heading */
+        .mono-gradient {
+            background-image: linear-gradient(to right, #ffffff, #aaaaaa); 
+        }
+
+        /* --- Canvas & Terminal Styles --- */
         #terminal-output {
             max-height: 300px;
             overflow-y: auto;
@@ -46,33 +66,43 @@
             line-height: 1.5;
             background-color: #000;
         }
-        /* Canvas is fixed, full screen, and sits behind all content */
+        
         #matrix-canvas {
             position: fixed;
             top: 0;
             left: 0;
-            z-index: -10; /* Ensures it is behind the main content */
-            /* NEW: GLOW EFFECT APPLIED TO CANVAS */
+            z-index: -10; 
             filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
         }
         
-        /* Custom Monochrome Colors */
-        .text-accent { color: #ffffff; } /* Primary Accent: White */
-        .text-error { color: #ff0000; }  /* Error: Red (for high visibility) */
-        .text-terminal-green { color: #00ff41; } /* Classic Terminal Green */
-        /* NEW: Red Terminal Text Color */
-        .text-terminal-red { color: #ff0041; } 
+        /* FIX: Ensure the entire prompt container stays on one line */
+        #terminal-prompt-container {
+             display: flex;
+             align-items: center;
+             white-space: nowrap;
+             /* FIX: Allow a scrollbar if the prompt is impossibly long, though JS should prevent it */
+             overflow-x: auto; 
+        }
         
-        /* Custom utility for subtle hover effects - now uses a crisp white shadow */
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -2px rgba(255, 255, 255, 0.05);
+        /* FIX: Prevents input from wrapping inside the terminal prompt */
+        #terminal-input {
+            flex-grow: 1; 
+            min-width: 0; 
+            box-sizing: border-box;
+            /* FIX: Make sure the input text is the same size/style as the output */
+            font-size: 0.875rem; /* text-sm equivalent */
+            line-height: 1.5;
         }
-        /* Monochrome Gradient for Heading */
-        .mono-gradient {
-            background-image: linear-gradient(to right, #ffffff, #aaaaaa); 
+
+        /* FIX: CSS for Zooming and Centering Profile Image */
+        .profile-image-zoom {
+            object-fit: cover;
+            object-position: 60% top; 
+            width: 14rem; 
+            height: 14rem; 
         }
-        /* New loading bar animation for UI enhancement */
+        
+        /* --- Animation Keyframes & Classes --- */
         @keyframes loading-dots {
             0%, 20% { content: "."; }
             40% { content: ".."; }
@@ -85,8 +115,7 @@
             width: 1em;
             text-align: left;
         }
-
-        /* NEW: Scroll Down Arrow Animation */
+        
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
@@ -95,90 +124,53 @@
             animation: bounce 1.5s infinite;
         }
 
-        /* NEW: Fade In Up Animation */
+        /* NEW: Base class for Intersection Observer targets */
+        .fade-in-target {
+            opacity: 0; 
+        }
+        
         @keyframes fade-in-up {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in-up {
-            animation: fade-in-up 0.8s ease-out forwards;
-            opacity: 0; /* Hidden by default */
+            animation: none; /* Controlled by JS observer */
         }
 
-        /* NEW: Fade In Left Animation */
         @keyframes fade-in-left {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         .animate-fade-in-left {
-            animation: fade-in-left 0.8s ease-out forwards;
-            opacity: 0; /* Hidden by default */
+            animation: none; /* Controlled by JS observer */
         }
 
-        /* NEW: Fade In Animation */
         @keyframes fade-in {
             from { opacity: 0; }
             to { opacity: 1; }
         }
         .animate-fade-in {
-            animation: fade-in 0.8s ease-out forwards;
-            opacity: 0;
-        }
-
-        /* FIX: Prevent input from wrapping inside the terminal prompt */
-        #terminal-input {
-            flex-grow: 1; /* Allows input to take up available space */
-            min-width: 0; /* Prevents overflow that causes wrapping */
-            box-sizing: border-box; /* Include padding/border in element's total width */
-        }
-        /* FIX: Ensure the entire prompt container stays on one line */
-        #terminal-prompt-container {
-             display: flex;
-             align-items: center;
-             white-space: nowrap;
-             overflow: hidden; /* Hide any overflow if necessary */
-        }
-        /* NEW: CSS for Zooming and Centering Profile Image */
-        .profile-image-zoom {
-            object-fit: cover;
-            /* FIX: Adjusted object-position to 60% top to shift the subject further left and perfectly center */
-            object-position: 60% top; 
-            width: 14rem; /* Increased size to 56/4 = 14rem, or 192px/3 = 48 -> 12rem, 16 * 12 = 192px */
-            height: 14rem; /* 56 x 56 pixels wide */
+            animation: none; /* Controlled by JS observer */
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- BACKGROUND CANVAS (Mouse Reactive Matrix) --><canvas id="matrix-canvas"></canvas>
+    <canvas id="matrix-canvas"></canvas>
 
-    <!-- Header and Navigation --><header class="bg-[#0a0a0a] shadow-2xl fixed top-0 left-0 w-full z-20 border-b border-gray-800">
+    <header class="bg-[#0a0a0a] shadow-2xl fixed top-0 left-0 w-full z-20 border-b border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <!-- Name/Logo with Monochrome Gradient --><div class="flex-shrink-0">
+                <div class="flex-shrink-0">
                     <span class="text-2xl font-extrabold text-transparent bg-clip-text mono-gradient">
                         Brijesh K.
                     </span>
                 </div>
-                <!-- Navigation -->
                 <nav class="hidden md:flex space-x-8">
                     <a href="#about" class="text-gray-300 hover:text-white transition duration-300 font-medium">About</a>
                     <a href="#skills" class="text-gray-300 hover:text-white transition duration-300 font-medium">Skills</a>
                     <a href="#experience" class="text-gray-300 hover:text-white transition duration-300 font-medium">Experience</a>
                     <a href="#projects" class="text-gray-300 hover:text-white transition duration-300 font-medium">Projects</a>
-                    <!-- FIX: Using Font Awesome icon for crispness -->
                     <a href="https://www.linkedin.com/in/brijeshbabusk" target="_blank" class="text-gray-300 hover:text-terminal-green transition duration-300 font-medium flex items-center">
                         <i class="fab fa-linkedin-in w-5 h-5 mr-1 flex items-center justify-center"></i>
                         LinkedIn
@@ -189,58 +181,54 @@
     </header>
 
     <main class="pt-20">
-        <!-- Hero Section (High Contrast) --><section class="relative min-h-screen flex items-center justify-center text-center overflow-hidden">
+        <section class="relative min-h-screen flex items-center justify-center text-center overflow-hidden fade-in-target animate-fade-in" style="animation-delay: 0s;"> 
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 z-10">
-                <p class="text-sm font-semibold text-terminal-green uppercase tracking-widest mb-3 animate-pulse animate-fade-in-up" style="animation-delay: 0.2s;">
+                <p class="text-sm font-semibold text-terminal-green uppercase tracking-widest mb-3 fade-in-target animate-pulse animate-fade-in-up" style="animation-delay: 0.2s;">
                     <svg class="w-4 h-4 inline mr-2 align-text-bottom" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM6.621 6.621a2 2 0 102.828 2.828L15.364 9.636a2 2 0 00-2.828-2.828L6.621 6.621z" clip-rule="evenodd"></path></svg>
                     SECURITY RESEARCHER | ECE STUDENT
                 </p>
-                <!-- Monochrome Gradient Heading --><h1 class="text-6xl sm:text-7xl lg:text-8xl font-extrabold text-white leading-tight mb-6 animate-fade-in-up" style="animation-delay: 0.4s;">
+                <h1 class="text-6xl sm:text-7xl lg:text-8xl font-extrabold text-white leading-tight mb-6 fade-in-target animate-fade-in-up" style="animation-delay: 0.4s;">
                     <span class="text-transparent bg-clip-text mono-gradient">Red Team</span> Offensive Matrix
                 </h1>
                 
-                <!-- Profile Picture and Name --><div class="my-8 animate-fade-in-up" style="animation-delay: 0.6s;">
-                    <!-- FIX: Increased size and applied object-position for zoom/centering -->
+                <div class="my-8 fade-in-target animate-fade-in-up" style="animation-delay: 0.6s;">
                     <img src="./image/WhatsApp%20Image%202025-11-06%20at%208.47.01%20PM.jpeg" 
                         onerror="this.onerror=null; this.src='https://placehold.co/192x192/222/FFF?text=Brijesh';"
                         alt="Brijesh Babu K" 
                         class="mx-auto profile-image-zoom rounded-full border-4 border-white shadow-lg transition duration-500 hover:scale-105">
                     
-                    <!-- Added name below the image --><h2 class="text-3xl font-bold mt-4 text-white">
+                    <h2 class="text-3xl font-bold mt-4 text-white">
                         Brijesh Babu K
                     </h2>
                 </div>
 
-                <!-- Subheading -->
-                <!-- FIX: Removed asterisks and applied green styling to keywords for better UI/UX -->
-                <p class="text-xl sm:text-2xl text-gray-400 mb-10 animate-fade-in-up" style="animation-delay: 0.8s;">
+                <p class="text-xl sm:text-2xl text-gray-400 mb-10 fade-in-target animate-fade-in-up" style="animation-delay: 0.8s;">
                     Applying offensive security principles to 
                     <span class="text-terminal-green">Packet Analysis</span>, 
                     <span class="text-terminal-green">Python-based Automation</span>, and 
                     <span class="text-terminal-green">Embedded System</span> vulnerability research.
                 </p>
-                <a href="#contact" class="inline-flex items-center justify-center px-10 py-3 border border-transparent text-lg font-semibold rounded-full shadow-lg text-black bg-white hover:bg-gray-300 transition duration-300 transform hover:scale-105 shadow-white/50 animate-fade-in-up" style="animation-delay: 1s;">
+                <a href="#contact" class="inline-flex items-center justify-center px-10 py-3 border border-transparent text-lg font-semibold rounded-full shadow-lg text-black bg-white hover:bg-gray-300 transition duration-300 transform hover:scale-105 shadow-white/50 fade-in-target animate-fade-in-up" style="animation-delay: 1s;">
                     <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     Collaborate Now
                 </a>
             </div>
             
-            <!-- NEW: Scroll Down Indicator --><a href="#about" class="absolute bottom-10 left-1/2 -translate-x-1/2 text-white animate-bounce-custom z-10 animate-fade-in" style="animation-delay: 1.2s;">
+            <a href="#about" class="absolute bottom-10 left-1/2 -translate-x-1/2 text-white animate-bounce-custom z-10 fade-in-target animate-fade-in" style="animation-delay: 1.2s;">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
             </a>
         </section>
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-            <!-- About Section with Terminal --><section id="about" class="bg-[#111111] shadow-2xl rounded-3xl p-8 lg:p-12 border border-gray-800 animate-fade-in-up">
+            <section id="about" class="bg-[#111111] shadow-2xl rounded-3xl p-8 lg:p-12 border border-gray-800 fade-in-target animate-fade-in-up">
                 <h2 class="text-3xl font-bold mb-8 border-b border-gray-700 pb-4">
                     <span class="text-white font-mono">~$</span> Profile Overview
                 </h2>
                 <div class="grid md:grid-cols-2 gap-10 items-center">
-                    <div class="animate-fade-in-left" style="animation-delay: 0.2s;">
+                    <div class="fade-in-target animate-fade-in-left" style="animation-delay: 0.2s;">
                         <p class="text-lg text-gray-300 mb-4">
                             I am currently pursuing my B.E. in Electronics and Communication Engineering at R.M.K. Engineering College. My focus is on the intersection of hardware, signals, and security, driven by a desire to build <strong class="text-terminal-green">robust and secure systems</strong>.
                         </p>
-                        <!-- FIX: Merged text, colored key terms green, removed asterisks -->
                         <p class="text-lg text-gray-300 mb-4">
                             My project work spans from developing high-level 
                             <span class="text-terminal-green">Python APIs (FastAPI)</span> to low-level signal processing with 
@@ -251,9 +239,8 @@
                             I thrive on challenges that require both software proficiency and hardware understanding, particularly in real-time data analysis and security research.
                         </p>
                     </div>
-                    <!-- Interactive Command Line / Terminal Simulation (Classic Green on Black) --><div class="bg-black p-6 rounded-xl shadow-inner shadow-white/10 border border-gray-700 animate-fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="bg-black p-6 rounded-xl shadow-inner shadow-white/10 border border-gray-700 fade-in-target animate-fade-in-up" style="animation-delay: 0.4s;">
                         <div class="flex justify-between items-center text-gray-600 mb-4">
-                            <!-- FIX: Changed header prompt from portfolio to aboutme -->
                             <span class="text-sm font-mono text-white">brijesh@aboutme:~</span>
                             <div class="flex space-x-1">
                                 <span class="h-3 w-3 bg-white rounded-full opacity-30"></span>
@@ -262,27 +249,23 @@
                             </div>
                         </div>
                         <div id="terminal-output" class="text-sm font-mono text-terminal-green p-2">
-                            <span class="text-white">// System ready.</span><br>
-                            <span class="text-white loading-animation">// Initializing console</span><br>
-                        </div>
+                            </div>
                         
-                        <!-- FIX: Applied Tailwind classes to prevent wrapping -->
                         <div id="terminal-prompt-container" class="flex items-center mt-2 whitespace-nowrap">
-                            <!-- FIX: Prompt is single-line and red, will use JS variable -->
-                            <span id="prompt" class="text-terminal-red font-mono text-sm">brijesh@aboutme:~ $ </span>
+                            <span id="prompt" class="text-terminal-red font-mono text-sm"></span> 
                             <input type="text" id="terminal-input" class="w-full bg-transparent text-white border-none outline-none font-mono text-sm" autofocus>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Skills Section --><section id="skills" class="py-12 animate-fade-in-up">
+            <section id="skills" class="py-12 fade-in-target animate-fade-in-up">
                 <h2 class="text-3xl font-bold mb-10 border-b border-gray-700 pb-4 text-center">
-                    <!-- FIX: Changed 0110. to 01. for consistent numbering --><span class="text-terminal-green font-mono">01.</span> Core Competencies
+                    <span class="text-terminal-green font-mono">01.</span> Core Competencies
                 </h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     
-                    <!-- Skill Card 1: Networking & Security --><div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.2s;">
                         <p class="text-4xl mb-3 text-white">
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.007 12.007 0 002.944 12c0 1.259.231 2.497.661 3.676A11.99 11.99 0 0012 21.056a11.99 11.99 0 008.395-4.882c.43-.918.661-1.957.661-3.04a12.007 12.007 0 00-.374-4.04z"></path></svg>
                         </p>
@@ -295,7 +278,7 @@
                         </ul>
                     </div>
 
-                    <!-- Skill Card 2: Programming & Scripting --><div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.4s;">
                         <p class="text-4xl mb-3 text-terminal-green">🐍</p>
                         <h3 class="font-bold text-xl text-white mb-3">Python & APIs</h3>
                         <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
@@ -306,7 +289,7 @@
                         </ul>
                     </div>
 
-                    <!-- Skill Card 3: Hardware & SDR --><div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.6s;">
+                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.6s;">
                         <p class="text-4xl mb-3 text-white">📡</p>
                         <h3 class="font-bold text-xl text-white mb-3">SDR & Embedded</h3>
                         <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
@@ -317,7 +300,7 @@
                         </ul>
                     </div>
 
-                    <!-- Skill Card 4: Data & Systems --><div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.8s;">
+                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.8s;">
                         <p class="text-4xl mb-3 text-white">🖥️</p>
                         <h3 class="font-bold text-xl text-white mb-3">Data & Operating Systems</h3>
                         <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
@@ -325,37 +308,35 @@
                             <li>RSSI Analysis</li>
                             <li>Linux (Ubuntu, Kali)</li>
                             <li>Deep Learning Models</li>
-                        </ul>
+                            </ul>
                     </div>
                 </div>
             </section>
 
-            <!-- Experience Section --><section id="experience" class="py-12 animate-fade-in-up">
+            <section id="experience" class="py-12 fade-in-target animate-fade-in-up">
                 <h2 class="text-3xl font-bold mb-10 border-b border-gray-700 pb-4 text-center">
                     <span class="text-white font-mono">02.</span> Professional Experience
                 </h2>
                 
                 <div class="space-y-8 max-w-4xl mx-auto">
-                    <!-- Internship 1: Precision Infomatic --><div class="relative pl-10 border-l-2 border-terminal-green animate-fade-in-left" style="animation-delay: 0.2s;">
+                    <div class="relative pl-10 border-l-2 border-terminal-green fade-in-target animate-fade-in-left" style="animation-delay: 0.2s;">
                         <div class="absolute w-4 h-4 rounded-full bg-terminal-green -left-2 top-0"></div>
                         <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-800">
                             <h3 class="text-2xl font-semibold text-white">Intern - Precision Infomatic</h3>
                             <p class="text-sm text-gray-500 mb-3">June 2025 - July 2025 | Chennai</p>
                             <ul class="list-disc list-inside text-gray-300 space-y-2">
-                                <!-- FIX: Removed ** and added text-terminal-green span -->
                                 <li>Gained practical exposure to <span class="text-terminal-green">biometrics-focused projects</span> with hands-on technical training.</li>
                                 <li>Developed skills in <span class="text-terminal-green">embedded systems integration</span> and applying security principles to real-world hardware.</li>
                             </ul>
                         </div>
                     </div>
                     
-                    <!-- Internship 2: Nirloba IT Pvt Ltd --><div class="relative pl-10 border-l-2 border-white animate-fade-in-left" style="animation-delay: 0.4s;">
+                    <div class="relative pl-10 border-l-2 border-white fade-in-target animate-fade-in-left" style="animation-delay: 0.4s;">
                         <div class="absolute w-4 h-4 rounded-full bg-white -left-2 top-0"></div>
                         <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-800">
                             <h3 class="text-2xl font-semibold text-white">Intern - Nirloba IT Pvt Ltd</h3>
                             <p class="text-sm text-gray-500 mb-3">May 2024 - June 2024</p>
                             <ul class="list-disc list-inside text-gray-300 space-y-2">
-                                <!-- FIX: Removed ** and added text-terminal-green span -->
                                 <li>Focused on <span class="text-terminal-green">embedded systems exposure</span> through structured project-based learning.</li>
                                 <li>Practiced core concepts of <span class="text-terminal-green">hardware-software integration</span> and system programming fundamentals.</li>
                             </ul>
@@ -364,13 +345,13 @@
                 </div>
             </section>
 
-            <!-- Projects Section --><section id="projects" class="py-12 animate-fade-in-up">
+            <section id="projects" class="py-12 fade-in-target animate-fade-in-up">
                 <h2 class="text-3xl font-bold mb-10 border-b border-gray-700 pb-4 text-center">
                     <span class="text-terminal-green font-mono">03.</span> Key Technical Projects
                 </h2>
 
-                <!-- Project Grid --><div class="grid md:grid-cols-3 gap-8">
-                    <!-- Project 1: Menaminiki AI --><div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.2s;">
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.2s;">
                         <p class="text-4xl text-white mb-3">🤖</p>
                         <h3 class="text-xl font-semibold text-white mb-2">Menaminiki AI Chatbot</h3>
                         <p class="text-xs text-gray-500 font-medium mb-3"><span class="text-terminal-green">Python</span> | <span class="text-terminal-green">FastAPI</span> | <span class="text-terminal-green">MongoDB Atlas</span></p>
@@ -383,7 +364,7 @@
                         </a>
                     </div>
 
-                    <!-- Project 2: Remote Sensing using SDR --><div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.4s;">
                         <p class="text-4xl text-terminal-green mb-3">📡</p>
                         <h3 class="font-bold text-xl text-white mb-2">SDR Remote Sensing</h3>
                         <p class="text-xs text-gray-500 font-medium mb-3"><span class="text-terminal-green">BladeRF Micro</span> | <span class="text-terminal-green">I/Q Signal</span> | <span class="text-terminal-green">Deep Learning</span></p>
@@ -396,7 +377,7 @@
                         </a>
                     </div>
 
-                    <!-- Project 3: HTTPS Monitoring & Decryption --><div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.6s;">
+                    <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.6s;">
                         <p class="text-4xl text-white mb-3">🔓</p>
                         <h3 class="text-xl font-semibold text-white mb-2">HTTPS Traffic Decryption</h3>
                         <p class="text-xs text-gray-500 font-medium mb-3"><span class="text-terminal-green">mitmproxy</span> | <span class="text-terminal-green">Wireshark</span> | <span class="text-terminal-green">SSL/TLS</span></p>
@@ -411,7 +392,7 @@
                 </div>
             </section>
 
-            <!-- Contact Section --><section id="contact" class="py-12 text-center bg-[#111111] rounded-2xl shadow-2xl p-8 border border-gray-800 animate-fade-in-up">
+            <section id="contact" class="py-12 text-center bg-[#111111] rounded-2xl shadow-2xl p-8 border border-gray-800 fade-in-target animate-fade-in-up">
                 <h2 class="text-3xl font-bold text-white mb-4">
                     Let's Connect and Secure the Future
                 </h2>
@@ -423,7 +404,6 @@
                         <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg>
                         Email Me
                     </a>
-                    <!-- FIX: Using Font Awesome icon for crispness -->
                     <a href="https://www.linkedin.com/in/brijeshbabusk" target="_blank" class="inline-flex items-center justify-center px-8 py-3 border-2 border-white text-base font-semibold rounded-full shadow-lg text-white bg-transparent hover:bg-gray-800 transition duration-300 transform hover:scale-105">
                         <i class="fab fa-linkedin-in w-5 h-5 mr-2 flex items-center justify-center"></i>
                         LinkedIn Profile
@@ -433,13 +413,13 @@
         </div>
     </main>
 
-    <!-- Footer --><footer class="bg-black text-gray-500 py-6 mt-16 border-t border-gray-800">
+    <footer class="bg-black text-gray-500 py-6 mt-16 border-t border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
             &copy; 2025 Brijesh Babu K. All Rights Reserved. | Designed with <span class="text-white">⚪</span> and Hosted on <a href="https://pages.github.com/" target="_blank" class="text-white hover:text-terminal-green transition duration-300">GitHub Pages</a>
         </div>
     </footer>
 
-    <!-- Canvas and Terminal Scripts (JavaScript) --><script>
+    <script>
         // --- Particle Matrix Background Script ---
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
@@ -449,9 +429,7 @@
         let mouseX = 0;
         let mouseY = 0;
         
-        // Particle colors matched to the monochrome theme
-        const PARTICLE_COLOR = '#ffffff'; // White for particles
-        
+        const PARTICLE_COLOR = '#ffffff'; 
         let particles = [];
         
         // Particle Class
@@ -460,28 +438,22 @@
                 this.x = Math.random() * width;
                 this.y = Math.random() * height;
                 this.size = Math.random() * 2 + 0.5;
-                // Base ambient speed for continuous movement (Increased)
                 this.speedX = Math.random() * 2 - 1.0; 
                 this.speedY = Math.random() * 2 - 1.0; 
             }
 
-            // Update position (bounce off edges)
             update() {
-                // --- Start Mouse Interaction Logic (PURE MAGNETIC ATTRACTION) ---
+                // --- Start Mouse Interaction Logic (MAGNETIC ATTRACTION) ---
                 const dxToMouse = this.x - mouseX;
                 const dyToMouse = this.y - mouseY;
                 const distance = Math.sqrt(dxToMouse * dxToMouse + dyToMouse * dyToMouse);
-                // FIX: Changed dxToToMouse to dxToMouse to resolve ReferenceError
                 const angle = Math.atan2(dyToMouse, dxToMouse); 
 
-                const attractionRadius = 300; // Large radius for attraction
-                const attractionStrength = 4.0; // INCREASED PULL STRENGTH
+                const attractionRadius = 300;
+                const attractionStrength = 4.0;
 
                 if (distance < attractionRadius) {
-                    // Attraction: Pull particles directly towards the mouse 
                     const force = (attractionRadius - distance) / attractionRadius * attractionStrength;
-                    
-                    // Subtract the force to move TOWARDS the mouse position
                     this.x -= Math.cos(angle) * force;
                     this.y -= Math.sin(angle) * force;
                 }
@@ -495,7 +467,6 @@
                 if (this.y < 0 || this.y > height) this.speedY *= -1;
             }
 
-            // Draw the particle
             draw() {
                 ctx.fillStyle = PARTICLE_COLOR;
                 ctx.beginPath();
@@ -508,7 +479,6 @@
         function initCanvas() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
-            // REDUCED DENSITY for a cleaner look
             const PARTICLE_COUNT = Math.floor((width * height) / 12000); 
             particles = [];
             for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -518,7 +488,7 @@
 
         // Draw connections between nearby particles
         function connect() {
-            const maxDistance = 150; // REDUCED CONNECTION DISTANCE for sparser lines
+            const maxDistance = 150; 
             
             for (let a = 0; a < particles.length; a++) {
                 for (let b = a; b < particles.length; b++) {
@@ -528,7 +498,6 @@
 
                     if (distance < maxDistance) {
                         const opacityValue = 1 - (distance / maxDistance);
-                        // Lines are slightly thinner and slightly more transparent for glow effect
                         ctx.strokeStyle = `rgba(255, 255, 255, ${opacityValue * 0.3})`; 
                         ctx.lineWidth = 0.5; 
                         ctx.beginPath();
@@ -542,7 +511,6 @@
 
         // Animation Loop
         function animate() {
-            // Clear the canvas each frame with a slightly weaker fade for longer trails
             ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; 
             ctx.fillRect(0, 0, width, height); 
             
@@ -555,49 +523,52 @@
         }
         
         // --- Event Listeners ---
-        
-        // Track mouse movement
         window.addEventListener('mousemove', (event) => {
             mouseX = event.x;
             mouseY = event.y;
         });
-
-        // Handle resize event
         window.addEventListener('resize', initCanvas);
 
-        // --- Intersection Observer for Animations (NEW) ---
+        // --- Intersection Observer for Animations (FIXED) ---
         const observerOptions = {
             root: null,
             rootMargin: '0px',
-            threshold: 0.1 // Trigger when 10% of the item is visible
+            threshold: 0.1 
         };
 
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.style.opacity = 1; // Make it visible
-                    const animationName = entry.target.dataset.animation || 'fade-in-up';
-                    entry.target.style.animation = `${animationName} 0.8s ease-out forwards`;
-                    observer.unobserve(entry.target); // Stop observing once animated
+                    const element = entry.target;
+                    // FIX: Read the animation class to apply the correct keyframe
+                    let animationName = 'fade-in-up'; 
+                    if (element.classList.contains('animate-fade-in-left')) {
+                         animationName = 'fade-in-left';
+                    } else if (element.classList.contains('animate-fade-in')) {
+                         animationName = 'fade-in';
+                    }
+                    
+                    element.style.animation = `${animationName} 0.8s ease-out forwards`;
+                    observer.unobserve(element);
                 }
             });
         }, observerOptions);
 
-        document.querySelectorAll('.animate-fade-in-up, .animate-fade-in-left, .animate-fade-in').forEach(element => {
+        document.querySelectorAll('.fade-in-target').forEach(element => {
             observer.observe(element);
         });
 
-        // --- Terminal Script Logic ---
+        // --- Terminal Script Logic (FIXED) ---
         const output = document.getElementById('terminal-output');
         const input = document.getElementById('terminal-input');
-        const loadingElement = document.querySelector('.loading-animation');
+        // FIX: The loading element is removed; we'll create the line dynamically
+        const promptSpan = document.getElementById('prompt'); 
         const user = 'brijesh';
-        // FIX: Change hostname to 'aboutme'
         const hostname = 'aboutme'; 
         const path = '~';
 
         const commands = {
-            'help': 'Available commands: <span class="text-white">about</span>, <span class="text-white">skills</span>, <span class="text-white">experience</span>, <span class="text-white">projects</span>, <span class="text-white">contact</span>, <span class="text-white">clear</span>',
+            'help': 'Available commands: <span class="text-white">about</span>, <span class="text-white">skills</span>, <span class="text-white">experience</span>, <span class="text-white">projects</span>, <span class="text-white">contact</span>, <span class="text-white">clear</span>, <span class="text-white">ls</span>, <span class="text-white">whoami</span>, <span class="text-white">whereami</span>',
             'about': 'B.E. ECE student with deep expertise in Python, Network Security, and Embedded Systems. Based in Chennai.',
             'skills': 'Primary stack: Python, Wireshark, mitmproxy, Scapy, BladeRF SDR, Linux/Kali, Zeek Logs/ELK.',
             'experience': 'Internships at Precision Infomatic (Biometrics/Embedded) and Nirloba IT Pvt Ltd (H/W-S/W Integration).',
@@ -608,6 +579,11 @@
             'whereami': hostname,
         };
 
+        function getPrompt() {
+            // FIX: Generate the full prompt string using JS variables
+            return `<span class="text-terminal-red">${user}@${hostname}</span>:<span class="text-terminal-red">${path}</span>$ `;
+        }
+        
         function addLine(text) {
             const line = document.createElement('div');
             line.innerHTML = text;
@@ -619,14 +595,14 @@
             const command = input.value.trim();
             input.value = '';
 
-            // FIX: Outputting the command, color set to white for user input echo
-            addLine(`<span class="text-terminal-red">${user}@${hostname}</span>:<span class="text-terminal-red">${path}</span>$ <span class="text-white">${command}</span>`);
+            // FIX: Outputting the executed command using the prompt function, followed by user input (white)
+            addLine(getPrompt() + `<span class="text-white">${command}</span>`);
 
             const lowerCommand = command.toLowerCase();
 
             if (lowerCommand === 'clear') {
                 output.innerHTML = '';
-                addLine('<span class="text-white">// System ready.</span>');
+                addLine('<span class="text-white">// System cleared.</span>');
                 addLine('<span class="text-white">// Type \'help\' and hit enter below.</span>');
             } else if (commands[lowerCommand]) {
                 addLine(commands[lowerCommand]);
@@ -640,12 +616,30 @@
         // Initial console animation logic
         let initializationDone = false;
         function completeInitialization() {
-             if (loadingElement) {
-                loadingElement.remove();
+            // FIX: Use the loading-animation CSS class only while loading, then remove it
+            const loadingLine = output.querySelector('.loading-animation');
+            if (loadingLine) {
+                 loadingLine.classList.remove('loading-animation');
+                 loadingLine.textContent = '// Initialization complete.';
             }
-            addLine('<span class="text-white">// System ready.</span>');
+
             addLine('<span class="text-white">// Type \'help\' and hit enter below.</span>');
+            
+            // Set the static prompt span once the console is ready
+            promptSpan.innerHTML = getPrompt();
+            
             initializationDone = true;
+        }
+        
+        // FIX: Function to start the loading animation
+        function startLoading() {
+            if (output) {
+                // Start with the basic line and the animation class
+                const loadingLine = document.createElement('div');
+                loadingLine.innerHTML = `<span class="text-white loading-animation">// Initializing console</span>`;
+                output.appendChild(loadingLine);
+                setTimeout(completeInitialization, 2000); 
+            }
         }
 
 
@@ -657,19 +651,17 @@
 
         // Initialize Canvas and Terminal on window load
         window.onload = function() {
-            initCanvas(); // Initialize particle canvas
-            animate();    // Start particle animation
+            initCanvas(); 
+            animate();    
 
-            // Terminal initialization delay for UI effect
-            setTimeout(completeInitialization, 2000); 
+            // Start the simulated terminal loading animation
+            startLoading();
 
-            // Initialize terminal
-            if (output && input) {
+            if (input) {
                 input.focus();
             }
         };
 
-        // Re-focus the input if the user clicks anywhere else
         document.body.addEventListener('click', () => {
              input.focus();
         });
