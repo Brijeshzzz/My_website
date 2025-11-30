@@ -323,10 +323,6 @@
                 left: 4px;
                 transform: rotate(0deg);
             }
-            
-            .absolute.bottom-12 {
-                bottom: 4px;
-            }
         }
     </style>
 </head>
@@ -385,8 +381,8 @@
         </div>
     </div>
 
-    <div class="z-10 absolute bottom-12 flex flex-col items-center gap-4">
-        <div id="statusText" class="text-xl mb-2 min-h-[30px] font-bold" style="text-shadow: 0 0 10px white;">Status: Idle...</div>
+    <div class="z-10 absolute top-12 sm:bottom-12 sm:top-auto flex flex-col items-center gap-4">
+        
         <button id="startBtn" class="sketch-btn px-8 py-4 text-2xl rounded-sm bg-white border-white">
             START ENGINE
         </button>
@@ -396,7 +392,7 @@
         const canvas = document.getElementById('scribbleCanvas');
         const ctx = canvas.getContext('2d');
         const startBtn = document.getElementById('startBtn');
-        const statusText = document.getElementById('statusText');
+        // Removed const statusText = document.getElementById('statusText');
         const tvContainer = document.getElementById('tvContainer');
         const aboutBtnContainer = document.getElementById('aboutBtnContainer');
         const terminalOutput = document.getElementById('terminalOutput');
@@ -731,9 +727,7 @@ _`;
             startBtn.innerText = "START ENGINE";
             startBtn.classList.remove('bg-black', 'text-white');
             startBtn.classList.add('bg-white', 'border-white');
-            statusText.innerText = "Status: Idle...";
-            statusText.style.color = "black";
-            statusText.style.textDecoration = "none";
+            // Removed statusText related reset
             
             // Force a canvas redraw to clear the soot immediately
             drawScene(); 
@@ -798,9 +792,8 @@ _`;
                 });
             }
             
-            statusText.innerText = "CRITICAL FAILURE!";
-            statusText.style.color = "black";
-            statusText.style.textDecoration = "underline";
+            // Removed statusText update: statusText.innerText = "CRITICAL FAILURE!";
+            // Removed statusText style update
         }
 
         function updateEngine() {
@@ -1040,8 +1033,8 @@ _`;
                 startBtn.innerText = "WARNING: UNSTABLE";
                 startBtn.classList.add('bg-black', 'text-white');
                 startBtn.classList.remove('bg-white', 'border-white');
-                statusText.innerText = "Status: PRESSURE BUILDING...";
-                statusText.style.color = "black";
+                // Removed statusText update: statusText.innerText = "Status: PRESSURE BUILDING...";
+                // Removed statusText style update
                 blastTimer = setTimeout(triggerBlast, 3000);
             } else if (isRunning) {
                 isRunning = false;
@@ -1049,8 +1042,8 @@ _`;
                 startBtn.innerText = "START ENGINE";
                 startBtn.classList.remove('bg-black', 'text-white');
                 startBtn.classList.add('bg-white', 'border-white');
-                statusText.innerText = "Status: Stopping...";
-                statusText.style.color = "black";
+                // Removed statusText update: statusText.innerText = "Status: Stopping...";
+                // Removed statusText style update
             }
         });
 
