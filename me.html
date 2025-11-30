@@ -1,1018 +1,679 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Scribble Engine</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap'); /* Retro Terminal Font */
-
+    <title>Brijesh Babu K - Offensive Security Matrix</title>
+    <!-- Load Tailwind CSS for modern, responsive styling --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Font Awesome for crisp icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Set default font to Inter --><style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
-            background-color: #ffffff;
-            /* Subtle paper texture */
-            background-image: 
-                linear-gradient(90deg, transparent 95%, #f0f0f0 95%),
-                linear-gradient(transparent 95%, #f0f0f0 95%);
-            background-size: 20px 20px;
-            font-family: 'Permanent Marker', cursive;
-            overflow: hidden;
-            cursor: crosshair;
+            font-family: 'Inter', sans-serif;
+            background-color: #000000; /* Pure Black Background */
+            color: #f0f0f0; /* Off-White Text */
+            transition: background-color 0.5s;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+            position: relative; /* Needed for the noise overlay */
         }
-
-        .sketch-btn {
-            background: transparent;
-            border: 3px solid black;
-            color: black;
-            transition: all 0.1s;
-            position: relative;
-            box-shadow: 5px 5px 0px rgba(0,0,0,0.1);
-            cursor: pointer;
-        }
-
-        .sketch-btn:hover {
-            transform: scale(1.05) rotate(-1deg);
-            box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
-        }
-
-        .sketch-btn:active {
-            transform: scale(0.95);
-            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
-        }
-
-        /* TV Styles */
-        #tvContainer {
-            display: none; /* Hidden by default */
-            position: absolute;
-            inset: 0;
-            z-index: 60;
-            /* Center the TV */
-            align-items: center;
-            justify-content: center;
-            pointer-events: none; 
-            animation: fadeIn 3s ease-in forwards;
-        }
-
-        .retro-tv {
-            background: #e5e5e5;
-            border: 6px solid #111;
-            border-radius: 30px;
-            box-shadow: 20px 20px 0px rgba(255, 255, 255, 0.1); 
-            padding: 25px;
-            position: relative; /* Centered by flex parent */
-            transform: rotate(-2deg);
-            width: 700px; /* Wider for terminal text */
-            max-width: 95vw;
-            pointer-events: auto; 
-            padding-right: 100px; /* Room for controls */
-        }
-
-        /* Antenna */
-        .retro-tv::before {
+        /* NEW: Monochrome Noise Overlay for high-tech aesthetic */
+        body::before {
             content: '';
-            position: absolute;
-            top: -60px;
-            left: 40%;
-            width: 6px;
-            height: 70px;
-            background: #111;
-            transform: rotate(-30deg);
-            transform-origin: bottom;
-            border-radius: 4px;
-        }
-        .retro-tv::after {
-            content: '';
-            position: absolute;
-            top: -60px;
-            left: 60%;
-            width: 6px;
-            height: 70px;
-            background: #111;
-            transform: rotate(30deg);
-            transform-origin: bottom;
-            border-radius: 4px;
-        }
-
-        /* Antenna balls */
-        .antenna-ball-left {
-            position: absolute;
-            top: -65px;
-            left: 23%;
-            width: 12px;
-            height: 12px;
-            background: #111;
-            border-radius: 50%;
-            z-index: 10;
-        }
-        .antenna-ball-right {
-            position: absolute;
-            top: -65px;
-            left: 75%;
-            width: 12px;
-            height: 12px;
-            background: #111;
-            border-radius: 50%;
-            z-index: 10;
-        }
-
-        .tv-screen {
-            background: #000; /* Pure black for terminal */
-            border: 4px solid #333;
-            border-radius: 40px 40px 40px 40px / 30px 30px 30px 30px; 
-            padding: 20px;
-            height: 450px; /* Taller for text */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            position: relative;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
-        }
-        
-        /* CRT Scanline effect */
-        .tv-screen::after {
-            content: " ";
-            display: block;
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(0, 255, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            z-index: 2;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-
-        /* Controls Panel on TV Body */
-        .tv-panel-right {
-            position: absolute;
-            right: 20px;
-            top: 25px;
-            bottom: 25px;
-            width: 60px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            border-left: 2px solid #999;
-            padding-left: 10px;
-        }
-
-        .knob {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #111;
-            border-radius: 50%;
-            position: relative;
-            background: #ccc;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .knob::after {
-            content: '';
-            position: absolute;
-            top: 5px;
-            left: 50%;
-            width: 4px;
-            height: 12px;
-            background: #111;
-        }
-
-        .speaker-grill {
-            display: flex;
-            gap: 6px;
-            margin-top: 15px;
-            justify-content: center;
-            width: 100%;
-        }
-        .grill-line {
-            width: 6px;
-            height: 20px;
-            background: #111;
-            border-radius: 3px;
-        }
-
-        .about-me-btn {
-            border: 2px solid #00ff00;
-            color: #00ff00;
-            padding: 15px 30px;
-            font-size: 2rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: rgba(0, 50, 0, 0.3);
-            font-family: 'VT323', monospace;
-            text-align: center;
-            text-shadow: 0 0 5px #00ff00;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
-            z-index: 10;
-        }
-        .about-me-btn:hover {
-            transform: scale(1.1);
-            background: rgba(0, 100, 0, 0.6);
-            box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
-        }
-        
-        .call-brijesh-btn {
-            border: 2px solid #ff0000; /* Red for alert */
-            color: #ff0000;
-            padding: 15px 30px;
-            font-size: 2rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: rgba(50, 0, 0, 0.3);
-            font-family: 'VT323', monospace;
-            text-align: center;
-            text-shadow: 0 0 5px #ff0000;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
-            z-index: 10;
-        }
-        .call-brijesh-btn:hover {
-            transform: scale(1.1);
-            background: rgba(100, 0, 0, 0.6);
-            box-shadow: 0 0 25px rgba(255, 0, 0, 0.8);
-        }
-
-        .terminal-text {
-            background: transparent;
-            border: none;
-            padding: 20px;
-            font-family: 'VT323', monospace;
             width: 100%;
             height: 100%;
-            outline: none;
-            font-size: 1.4rem;
-            line-height: 1.2;
-            color: #00ff00; /* Hacker Green */
-            text-shadow: 0 0 4px rgba(0, 255, 0, 0.6);
-            resize: none;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            z-index: 5;
-            display: none; /* Hidden initially */
-        }
-        
-        .terminal-text.active {
-            display: block;
-        }
-        
-        /* Scrollbar for terminal */
-        .terminal-text::-webkit-scrollbar {
-            width: 10px;
-        }
-        .terminal-text::-webkit-scrollbar-track {
-            background: #000; 
-        }
-        .terminal-text::-webkit-scrollbar-thumb {
-            background: #004400; 
-            border-radius: 5px;
+            pointer-events: none;
+            opacity: 0.05; /* Very subtle noise */
+            z-index: -5;
+            /* Simple monochrome noise pattern (can be replaced by a texture if needed) */
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 1px,
+                #fff 1px,
+                #fff 2px
+            );
+            background-size: 100% 100%;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
+        /* Custom styles for the interactive terminal section */
+        #terminal-output {
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 0.5rem;
+            line-height: 1.5;
+            background-color: #000;
+        }
+        /* Canvas is fixed, full screen, and sits behind all content */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -10; /* Ensures it is behind the main content */
+            /* NEW: GLOW EFFECT APPLIED TO CANVAS */
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+        }
+        
+        /* Custom Monochrome Colors */
+        .text-accent { color: #ffffff; } /* Primary Accent: White */
+        .text-error { color: #ff0000; }  /* Error: Red (for high visibility) */
+        .text-terminal-green { color: #00ff41; } /* Classic Terminal Green */
+        /* NEW: Red Terminal Text Color */
+        .text-terminal-red { color: #ff0041; } 
+        
+        /* Custom utility for subtle hover effects - now uses a crisp white shadow */
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -2px rgba(255, 255, 255, 0.05);
+        }
+        /* Monochrome Gradient for Heading */
+        .mono-gradient {
+            background-image: linear-gradient(to right, #ffffff, #aaaaaa); 
+        }
+        /* New loading bar animation for UI enhancement */
+        @keyframes loading-dots {
+            0%, 20% { content: "."; }
+            40% { content: ".."; }
+            60%, 100% { content: "..."; }
+        }
+        .loading-animation::after {
+            content: "";
+            animation: loading-dots 2s infinite;
+            display: inline-block;
+            width: 1em;
+            text-align: left;
+        }
+
+        /* NEW: Scroll Down Arrow Animation */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-bounce-custom {
+            animation: bounce 1.5s infinite;
+        }
+
+        /* NEW: Fade In Up Animation */
+        @keyframes fade-in-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fade-in-up 0.8s ease-out forwards;
+            opacity: 0; /* Hidden by default */
+        }
+
+        /* NEW: Fade In Left Animation */
+        @keyframes fade-in-left {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .animate-fade-in-left {
+            animation: fade-in-left 0.8s ease-out forwards;
+            opacity: 0; /* Hidden by default */
+        }
+
+        /* NEW: Fade In Animation */
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        /* FIX: Prevent input from wrapping inside the terminal prompt */
+        #terminal-input {
+            flex-grow: 1; /* Allows input to take up available space */
+            min-width: 0; /* Prevents overflow that causes wrapping */
+            box-sizing: border-box; /* Include padding/border in element's total width */
+        }
+        /* FIX: Ensure the entire prompt container stays on one line */
+        #terminal-prompt-container {
+             display: flex;
+             align-items: center;
+             white-space: nowrap;
+             overflow: hidden; /* Hide any overflow if necessary */
+        }
+        /* NEW: CSS for Zooming and Centering Profile Image */
+        .profile-image-zoom {
+            object-fit: cover;
+            /* FIX: Adjusted object-position to 60% top to shift the subject further left and perfectly center */
+            object-position: 60% top; 
+            width: 14rem; /* Increased size to 56/4 = 14rem, or 192px/3 = 48 -> 12rem, 16 * 12 = 192px */
+            height: 14rem; /* 56 x 56 pixels wide */
         }
     </style>
 </head>
-<body class="w-full h-screen flex flex-col items-center justify-center relative">
+<body class="antialiased">
 
-    <!-- Title / Signature -->
-    <div class="absolute top-8 left-8 transform -rotate-2 select-none pointer-events-none z-50 mix-blend-difference text-white">
-        <h1 class="text-4xl" style="color: #000; text-shadow: 0 0 5px white;">brijeshzzzz engine</h1>
-    </div>
+    <!-- BACKGROUND CANVAS (Mouse Reactive Matrix) --><canvas id="matrix-canvas"></canvas>
 
-    <!-- Main Canvas -->
-    <canvas id="scribbleCanvas" class="w-full h-full absolute inset-0 z-0"></canvas>
-
-    <!-- TV Overlay (End Screen) -->
-    <div id="tvContainer">
-        <!-- The Retro TV -->
-        <div class="retro-tv">
-            <!-- Extra Antenna Balls for style -->
-            <div class="antenna-ball-left"></div>
-            <div class="antenna-ball-right"></div>
-
-            <!-- Screen Area -->
-            <div class="tv-screen" id="screenContent">
-                <!-- Initial Button / Emergency Content -->
-                <div id="aboutBtnContainer" class="flex flex-col items-center justify-center h-full w-full">
-                    <div class="about-me-btn" onclick="startTerminal()">
-                        > ./ABOUT_ME.sh
-                    </div>
+    <!-- Header and Navigation --><header class="bg-[#0a0a0a] shadow-2xl fixed top-0 left-0 w-full z-20 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Name/Logo with Monochrome Gradient --><div class="flex-shrink-0">
+                    <span class="text-2xl font-extrabold text-transparent bg-clip-text mono-gradient">
+                        Brijesh K.
+                    </span>
                 </div>
+                <!-- Navigation -->
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#about" class="text-gray-300 hover:text-white transition duration-300 font-medium">About</a>
+                    <a href="#skills" class="text-gray-300 hover:text-white transition duration-300 font-medium">Skills</a>
+                    <a href="#experience" class="text-gray-300 hover:text-white transition duration-300 font-medium">Experience</a>
+                    <a href="#projects" class="text-gray-300 hover:text-white transition duration-300 font-medium">Projects</a>
+                    <!-- FIX: Using Font Awesome icon for crispness -->
+                    <a href="https://www.linkedin.com/in/brijeshbabusk" target="_blank" class="text-gray-300 hover:text-terminal-green transition duration-300 font-medium flex items-center">
+                        <i class="fab fa-linkedin-in w-5 h-5 mr-1 flex items-center justify-center"></i>
+                        LinkedIn
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-20">
+        <!-- Hero Section (High Contrast) --><section class="relative min-h-screen flex items-center justify-center text-center overflow-hidden">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 z-10">
+                <p class="text-sm font-semibold text-terminal-green uppercase tracking-widest mb-3 animate-pulse animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <svg class="w-4 h-4 inline mr-2 align-text-bottom" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM6.621 6.621a2 2 0 102.828 2.828L15.364 9.636a2 2 0 00-2.828-2.828L6.621 6.621z" clip-rule="evenodd"></path></svg>
+                    SECURITY RESEARCHER | ECE STUDENT
+                </p>
+                <!-- Monochrome Gradient Heading --><h1 class="text-6xl sm:text-7xl lg:text-8xl font-extrabold text-white leading-tight mb-6 animate-fade-in-up" style="animation-delay: 0.4s;">
+                    <span class="text-transparent bg-clip-text mono-gradient">Red Team</span> Offensive Matrix
+                </h1>
                 
-                <!-- Terminal Text Area -->
-                <textarea id="terminalOutput" class="terminal-text" readonly></textarea>
-                
-                <!-- Emergency Screen (Hidden initially) -->
-                <div id="emergencyScreen" class="absolute inset-0 bg-black flex-col items-center justify-center p-8 hidden text-red-500 font-mono text-center text-xl" style="font-family: 'VT323', monospace;">
-                    <div class="flex flex-col gap-6 w-full items-center">
-                        <span class="text-3xl text-red-500 mb-4 animate-pulse">!!! ALERT: SYSTEM COMPROMISED !!!</span>
-                        
-                        <p class="text-2xl text-red-400">
-                            SOMETHING GOT HACKED!
+                <!-- Profile Picture and Name --><div class="my-8 animate-fade-in-up" style="animation-delay: 0.6s;">
+                    <!-- FIX: Increased size and applied object-position for zoom/centering -->
+                    <img src="./image/WhatsApp%20Image%202025-11-06%20at%208.47.01%20PM.jpeg" 
+                        onerror="this.onerror=null; this.src='https://placehold.co/192x192/222/FFF?text=Brijesh';"
+                        alt="Brijesh Babu K" 
+                        class="mx-auto profile-image-zoom rounded-full border-4 border-white shadow-lg transition duration-500 hover:scale-105">
+                    
+                    <!-- Added name below the image --><h2 class="text-3xl font-bold mt-4 text-white">
+                        Brijesh Babu K
+                    </h2>
+                </div>
+
+                <!-- Subheading -->
+                <!-- FIX: Removed asterisks and applied green styling to keywords for better UI/UX -->
+                <p class="text-xl sm:text-2xl text-gray-400 mb-10 animate-fade-in-up" style="animation-delay: 0.8s;">
+                    Applying offensive security principles to 
+                    <span class="text-terminal-green">Packet Analysis</span>, 
+                    <span class="text-terminal-green">Python-based Automation</span>, and 
+                    <span class="text-terminal-green">Embedded System</span> vulnerability research.
+                </p>
+                <a href="#contact" class="inline-flex items-center justify-center px-10 py-3 border border-transparent text-lg font-semibold rounded-full shadow-lg text-black bg-white hover:bg-gray-300 transition duration-300 transform hover:scale-105 shadow-white/50 animate-fade-in-up" style="animation-delay: 1s;">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    Collaborate Now
+                </a>
+            </div>
+            
+            <!-- NEW: Scroll Down Indicator --><a href="#about" class="absolute bottom-10 left-1/2 -translate-x-1/2 text-white animate-bounce-custom z-10 animate-fade-in" style="animation-delay: 1.2s;">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+            </a>
+        </section>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+            <!-- About Section with Terminal --><section id="about" class="bg-[#111111] shadow-2xl rounded-3xl p-8 lg:p-12 border border-gray-800 animate-fade-in-up">
+                <h2 class="text-3xl font-bold mb-8 border-b border-gray-700 pb-4">
+                    <span class="text-white font-mono">~$</span> Profile Overview
+                </h2>
+                <div class="grid md:grid-cols-2 gap-10 items-center">
+                    <div class="animate-fade-in-left" style="animation-delay: 0.2s;">
+                        <p class="text-lg text-gray-300 mb-4">
+                            I am currently pursuing my B.E. in Electronics and Communication Engineering at R.M.K. Engineering College. My focus is on the intersection of hardware, signals, and security, driven by a desire to build <strong class="text-terminal-green">robust and secure systems</strong>.
                         </p>
-                        <p class="text-red-300">
-                            SECURITY PROTOCOLS FAILED.
+                        <!-- FIX: Merged text, colored key terms green, removed asterisks -->
+                        <p class="text-lg text-gray-300 mb-4">
+                            My project work spans from developing high-level 
+                            <span class="text-terminal-green">Python APIs (FastAPI)</span> to low-level signal processing with 
+                            <span class="text-terminal-green">BladeRF SDR</span> and conducting critical network analyses using 
+                            <span class="text-terminal-green">mitmproxy</span> and <span class="text-terminal-green">Wireshark</span>.
                         </p>
-                        
-                        <div class="mt-8">
-                            <p class="text-green-500 mb-4 text-3xl">CALL BRIJESH TO SOLVE</p>
-                            <!-- UPDATED: Using the standard browser redirect command -->
-                            <div class="call-brijesh-btn" onclick="redirectToIndex()">
-                                CALL BRIJESH
+                        <p class="text-lg text-gray-300">
+                            I thrive on challenges that require both software proficiency and hardware understanding, particularly in real-time data analysis and security research.
+                        </p>
+                    </div>
+                    <!-- Interactive Command Line / Terminal Simulation (Classic Green on Black) --><div class="bg-black p-6 rounded-xl shadow-inner shadow-white/10 border border-gray-700 animate-fade-in-up" style="animation-delay: 0.4s;">
+                        <div class="flex justify-between items-center text-gray-600 mb-4">
+                            <!-- FIX: Changed header prompt from portfolio to aboutme -->
+                            <span class="text-sm font-mono text-white">brijesh@aboutme:~</span>
+                            <div class="flex space-x-1">
+                                <span class="h-3 w-3 bg-white rounded-full opacity-30"></span>
+                                <span class="h-3 w-3 bg-white rounded-full opacity-50"></span>
+                                <span class="h-3 w-3 bg-white rounded-full opacity-70"></span>
                             </div>
+                        </div>
+                        <div id="terminal-output" class="text-sm font-mono text-terminal-green p-2">
+                            <span class="text-white">// System ready.</span><br>
+                            <span class="text-white loading-animation">// Initializing console</span><br>
+                        </div>
+                        
+                        <!-- FIX: Applied Tailwind classes to prevent wrapping -->
+                        <div id="terminal-prompt-container" class="flex items-center mt-2 whitespace-nowrap">
+                            <!-- FIX: Prompt is single-line and red, will use JS variable -->
+                            <span id="prompt" class="text-terminal-red font-mono text-sm">brijesh@aboutme:~ $ </span>
+                            <input type="text" id="terminal-input" class="w-full bg-transparent text-white border-none outline-none font-mono text-sm" autofocus>
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- Side Controls Panel -->
-            <div class="tv-panel-right">
-                <div class="knob" style="transform: rotate(45deg);"></div>
-                <div class="knob" style="transform: rotate(120deg);"></div>
-                <div class="speaker-grill" style="flex-direction: column; gap: 4px;">
-                    <div class="grill-line" style="width: 40px; height: 4px;"></div>
-                    <div class="grill-line" style="width: 40px; height: 4px;"></div>
-                    <div class="grill-line" style="width: 40px; height: 4px;"></div>
+            <!-- Skills Section --><section id="skills" class="py-12 animate-fade-in-up">
+                <h2 class="text-3xl font-bold mb-10 border-b border-gray-700 pb-4 text-center">
+                    <!-- FIX: Changed 0110. to 01. for consistent numbering --><span class="text-terminal-green font-mono">01.</span> Core Competencies
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    
+                    <!-- Skill Card 1: Networking & Security --><div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.2s;">
+                        <p class="text-4xl mb-3 text-white">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.007 12.007 0 002.944 12c0 1.259.231 2.497.661 3.676A11.99 11.99 0 0012 21.056a11.99 11.99 0 008.395-4.882c.43-.918.661-1.957.661-3.04a12.007 12.007 0 00-.374-4.04z"></path></svg>
+                        </p>
+                        <h3 class="font-bold text-xl text-white mb-3">Network Security</h3>
+                        <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
+                            <li>Deep Packet Analysis (Wireshark)</li>
+                            <li>SSL/TLS Interception (mitmproxy)</li>
+                            <li>Scapy, Aircrack-ng</li>
+                            <li>Log Analysis (Zeek to ELK)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Skill Card 2: Programming & Scripting --><div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.4s;">
+                        <p class="text-4xl mb-3 text-terminal-green">🐍</p>
+                        <h3 class="font-bold text-xl text-white mb-3">Python & APIs</h3>
+                        <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
+                            <li>Python (Fluent)</li>
+                            <li>Web Frameworks (FastAPI)</li>
+                            <li>Database (MongoDB Atlas)</li>
+                            <li>Shell Scripting</li>
+                        </ul>
+                    </div>
+
+                    <!-- Skill Card 3: Hardware & SDR --><div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.6s;">
+                        <p class="text-4xl mb-3 text-white">📡</p>
+                        <h3 class="font-bold text-xl text-white mb-3">SDR & Embedded</h3>
+                        <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
+                            <li>BladeRF Micro 2.0 XA4</li>
+                            <li>I/Q Signal Processing</li>
+                            <li>Embedded C++</li>
+                            <li>Hardware Integration</li>
+                        </ul>
+                    </div>
+
+                    <!-- Skill Card 4: Data & Systems --><div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.8s;">
+                        <p class="text-4xl mb-3 text-white">🖥️</p>
+                        <h3 class="font-bold text-xl text-white mb-3">Data & Operating Systems</h3>
+                        <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
+                            <li>Data Visualization (Matplotlib)</li>
+                            <li>RSSI Analysis</li>
+                            <li>Linux (Ubuntu, Kali)</li>
+                            <li>Deep Learning Models</li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
+            </section>
+
+            <!-- Experience Section --><section id="experience" class="py-12 animate-fade-in-up">
+                <h2 class="text-3xl font-bold mb-10 border-b border-gray-700 pb-4 text-center">
+                    <span class="text-white font-mono">02.</span> Professional Experience
+                </h2>
+                
+                <div class="space-y-8 max-w-4xl mx-auto">
+                    <!-- Internship 1: Precision Infomatic --><div class="relative pl-10 border-l-2 border-terminal-green animate-fade-in-left" style="animation-delay: 0.2s;">
+                        <div class="absolute w-4 h-4 rounded-full bg-terminal-green -left-2 top-0"></div>
+                        <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-800">
+                            <h3 class="text-2xl font-semibold text-white">Intern - Precision Infomatic</h3>
+                            <p class="text-sm text-gray-500 mb-3">June 2025 - July 2025 | Chennai</p>
+                            <ul class="list-disc list-inside text-gray-300 space-y-2">
+                                <!-- FIX: Removed ** and added text-terminal-green span -->
+                                <li>Gained practical exposure to <span class="text-terminal-green">biometrics-focused projects</span> with hands-on technical training.</li>
+                                <li>Developed skills in <span class="text-terminal-green">embedded systems integration</span> and applying security principles to real-world hardware.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Internship 2: Nirloba IT Pvt Ltd --><div class="relative pl-10 border-l-2 border-white animate-fade-in-left" style="animation-delay: 0.4s;">
+                        <div class="absolute w-4 h-4 rounded-full bg-white -left-2 top-0"></div>
+                        <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-800">
+                            <h3 class="text-2xl font-semibold text-white">Intern - Nirloba IT Pvt Ltd</h3>
+                            <p class="text-sm text-gray-500 mb-3">May 2024 - June 2024</p>
+                            <ul class="list-disc list-inside text-gray-300 space-y-2">
+                                <!-- FIX: Removed ** and added text-terminal-green span -->
+                                <li>Focused on <span class="text-terminal-green">embedded systems exposure</span> through structured project-based learning.</li>
+                                <li>Practiced core concepts of <span class="text-terminal-green">hardware-software integration</span> and system programming fundamentals.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Projects Section --><section id="projects" class="py-12 animate-fade-in-up">
+                <h2 class="text-3xl font-bold mb-10 border-b border-gray-700 pb-4 text-center">
+                    <span class="text-terminal-green font-mono">03.</span> Key Technical Projects
+                </h2>
+
+                <!-- Project Grid --><div class="grid md:grid-cols-3 gap-8">
+                    <!-- Project 1: Menaminiki AI --><div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.2s;">
+                        <p class="text-4xl text-white mb-3">🤖</p>
+                        <h3 class="text-xl font-semibold text-white mb-2">Menaminiki AI Chatbot</h3>
+                        <p class="text-xs text-gray-500 font-medium mb-3"><span class="text-terminal-green">Python</span> | <span class="text-terminal-green">FastAPI</span> | <span class="text-terminal-green">MongoDB Atlas</span></p>
+                        <p class="text-gray-400 mb-4 text-sm">
+                            A cross-platform food/recipe chatbot using <span class="text-terminal-green">FastAPI</span> for API development and <span class="text-terminal-green">MongoDB Atlas</span> for data persistence. Demonstrates API expertise and Linux-native deployment.
+                        </p>
+                        <a href="https://github.com/Brijeshzzz" target="_blank" class="text-sm font-medium text-terminal-green hover:text-white transition duration-300 flex items-center">
+                            View Code
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+
+                    <!-- Project 2: Remote Sensing using SDR --><div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.4s;">
+                        <p class="text-4xl text-terminal-green mb-3">📡</p>
+                        <h3 class="font-bold text-xl text-white mb-2">SDR Remote Sensing</h3>
+                        <p class="text-xs text-gray-500 font-medium mb-3"><span class="text-terminal-green">BladeRF Micro</span> | <span class="text-terminal-green">I/Q Signal</span> | <span class="text-terminal-green">Deep Learning</span></p>
+                        <p class="text-gray-400 mb-4 text-sm">
+                            Implemented fire, smoke, and motion detection using the <span class="text-terminal-green">BladeRF SDR</span> by analyzing raw <span class="text-terminal-green">I/Q sample data</span>. Focuses on signal processing, feature extraction, and classification.
+                        </p>
+                        <a href="https://github.com/Brijeshzzz" target="_blank" class="text-sm font-medium text-terminal-green hover:text-white transition duration-300 flex items-center">
+                            View Code
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+
+                    <!-- Project 3: HTTPS Monitoring & Decryption --><div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover animate-fade-in-up" style="animation-delay: 0.6s;">
+                        <p class="text-4xl text-white mb-3">🔓</p>
+                        <h3 class="text-xl font-semibold text-white mb-2">HTTPS Traffic Decryption</h3>
+                        <p class="text-xs text-gray-500 font-medium mb-3"><span class="text-terminal-green">mitmproxy</span> | <span class="text-terminal-green">Wireshark</span> | <span class="text-terminal-green">SSL/TLS</span></p>
+                        <p class="text-gray-400 mb-4 text-sm">
+                            Security research demonstrating interception and decryption of HTTPS traffic using <span class="text-terminal-green">Kali Linux</span> and <span class="text-terminal-green">mitmproxy</span>, including <span class="text-terminal-green">SSLKEYLOGFILE</span> for deep packet inspection.
+                        </p>
+                        <a href="https://github.com/Brijeshzzz" target="_blank" class="text-sm font-medium text-terminal-green hover:text-white transition duration-300 flex items-center">
+                            View Code
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contact Section --><section id="contact" class="py-12 text-center bg-[#111111] rounded-2xl shadow-2xl p-8 border border-gray-800 animate-fade-in-up">
+                <h2 class="text-3xl font-bold text-white mb-4">
+                    Let's Connect and Secure the Future
+                </h2>
+                <p class="text-xl text-gray-400 mb-8 max-w-3xl mx-auto">
+                    I am actively seeking internships and collaborative research opportunities. Reach out to discuss how my skills in Python and Network Security can contribute to your team.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+                    <a href="mailto:skbrijeshbabu20@gmail.com" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-semibold rounded-full shadow-lg text-black bg-white hover:bg-gray-300 transition duration-300 transform hover:scale-105">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg>
+                        Email Me
+                    </a>
+                    <!-- FIX: Using Font Awesome icon for crispness -->
+                    <a href="https://www.linkedin.com/in/brijeshbabusk" target="_blank" class="inline-flex items-center justify-center px-8 py-3 border-2 border-white text-base font-semibold rounded-full shadow-lg text-white bg-transparent hover:bg-gray-800 transition duration-300 transform hover:scale-105">
+                        <i class="fab fa-linkedin-in w-5 h-5 mr-2 flex items-center justify-center"></i>
+                        LinkedIn Profile
+                    </a>
+                </div>
+            </section>
         </div>
-    </div>
+    </main>
 
-    <!-- Controls -->
-    <div class="z-10 absolute bottom-12 flex flex-col items-center gap-4">
-        <div id="statusText" class="text-xl mb-2 min-h-[30px] font-bold" style="text-shadow: 0 0 10px white;">Status: Idle...</div>
-        <button id="startBtn" class="sketch-btn px-8 py-4 text-2xl rounded-sm bg-white border-white">
-            START ENGINE
-        </button>
-    </div>
+    <!-- Footer --><footer class="bg-black text-gray-500 py-6 mt-16 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
+            &copy; 2025 Brijesh Babu K. All Rights Reserved. | Designed with <span class="text-white">⚪</span> and Hosted on <a href="https://pages.github.com/" target="_blank" class="text-white hover:text-terminal-green transition duration-300">GitHub Pages</a>
+        </div>
+    </footer>
 
-    <script>
-        const canvas = document.getElementById('scribbleCanvas');
+    <!-- Canvas and Terminal Scripts (JavaScript) --><script>
+        // --- Particle Matrix Background Script ---
+        const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
-        const startBtn = document.getElementById('startBtn');
-        const statusText = document.getElementById('statusText');
-        const tvContainer = document.getElementById('tvContainer');
-        const aboutBtnContainer = document.getElementById('aboutBtnContainer');
-        const terminalOutput = document.getElementById('terminalOutput');
-        const emergencyScreen = document.getElementById('emergencyScreen');
-
         let width, height;
-        let isRunning = false;
-        let isExploded = false;
-        let rpm = 0;
-        let vibration = 0;
-        let blastTimer = null;
-        let sootLevel = 0; 
-        let shockwaveRadius = 0; 
-        let alarmInterval = null; // New variable for the alarm sound interval
         
-        const JITTER_AMOUNT = 1.5; 
-        const LINE_WIDTH_BASE = 2.5;
+        // Mouse position variables
+        let mouseX = 0;
+        let mouseY = 0;
         
-        let crankAngle = 0;
+        // Particle colors matched to the monochrome theme
+        const PARTICLE_COLOR = '#ffffff'; // White for particles
+        
         let particles = [];
-
-        // --- Audio Context & Sound Generation ---
-        let audioCtx = null;
-        let noiseBuffer = null;
-
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                // Create a noise buffer
-                const bufferSize = audioCtx.sampleRate * 2; 
-                noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = noiseBuffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
+        
+        // Particle Class
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 2 + 0.5;
+                // Base ambient speed for continuous movement (Increased)
+                this.speedX = Math.random() * 2 - 1.0; 
+                this.speedY = Math.random() * 2 - 1.0; 
             }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
+
+            // Update position (bounce off edges)
+            update() {
+                // --- Start Mouse Interaction Logic (PURE MAGNETIC ATTRACTION) ---
+                const dxToMouse = this.x - mouseX;
+                const dyToMouse = this.y - mouseY;
+                const distance = Math.sqrt(dxToMouse * dxToMouse + dyToMouse * dyToMouse);
+                // FIX: Changed dxToToMouse to dxToMouse to resolve ReferenceError
+                const angle = Math.atan2(dyToMouse, dxToMouse); 
+
+                const attractionRadius = 300; // Large radius for attraction
+                const attractionStrength = 4.0; // INCREASED PULL STRENGTH
+
+                if (distance < attractionRadius) {
+                    // Attraction: Pull particles directly towards the mouse 
+                    const force = (attractionRadius - distance) / attractionRadius * attractionStrength;
+                    
+                    // Subtract the force to move TOWARDS the mouse position
+                    this.x -= Math.cos(angle) * force;
+                    this.y -= Math.sin(angle) * force;
+                }
+                // --- End Mouse Interaction Logic ---
+
+                // Standard boundary movement
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x < 0 || this.x > width) this.speedX *= -1;
+                if (this.y < 0 || this.y > height) this.speedY *= -1;
+            }
+
+            // Draw the particle
+            draw() {
+                ctx.fillStyle = PARTICLE_COLOR;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
-        // 1. VINTAGE MECHANICAL KEYBOARD SOUND
-        function playTypingSound() {
-            initAudio();
-            const t = audioCtx.currentTime;
-
-            // "Thock" (Low frequency body)
-            const thud = audioCtx.createOscillator();
-            thud.type = 'sine';
-            thud.frequency.setValueAtTime(150, t);
-            thud.frequency.exponentialRampToValueAtTime(50, t + 0.05);
-            
-            const thudGain = audioCtx.createGain();
-            thudGain.gain.setValueAtTime(0.3, t);
-            thudGain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
-            
-            thud.connect(thudGain);
-            thudGain.connect(audioCtx.destination);
-            thud.start(t);
-            thud.stop(t + 0.05);
-
-            // "Click" (High frequency plastic snap)
-            const click = audioCtx.createOscillator();
-            click.type = 'square';
-            click.frequency.setValueAtTime(1200, t);
-            click.frequency.exponentialRampToValueAtTime(600, t + 0.03);
-            
-            const clickGain = audioCtx.createGain();
-            clickGain.gain.setValueAtTime(0.1, t);
-            clickGain.gain.exponentialRampToValueAtTime(0.01, t + 0.03);
-
-            click.connect(clickGain);
-            clickGain.connect(audioCtx.destination);
-            click.start(t);
-            click.stop(t + 0.03);
-            
-            // "Scratch" (Noise texture)
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = noiseBuffer;
-            const noiseGain = audioCtx.createGain();
-            noiseGain.gain.setValueAtTime(0.2, t);
-            noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.04);
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = "highpass";
-            filter.frequency.value = 1000;
-            
-            noise.connect(filter);
-            filter.connect(noiseGain);
-            noiseGain.connect(audioCtx.destination);
-            noise.start(t);
-            noise.stop(t + 0.04);
-        }
-
-        // 2. SUPERCAR ENGINE START SOUND (FM Synthesis)
-        function playEngineStartSound() {
-            initAudio();
-            const t = audioCtx.currentTime;
-
-            // Main "Scream" (FM Carrier)
-            const carrier = audioCtx.createOscillator();
-            carrier.type = 'sawtooth';
-            carrier.frequency.setValueAtTime(50, t);
-            // Revving up fast to high RPM
-            carrier.frequency.exponentialRampToValueAtTime(600, t + 2.5); 
-            
-            // "Growl" (FM Modulator)
-            const modulator = audioCtx.createOscillator();
-            modulator.type = 'square';
-            modulator.frequency.setValueAtTime(25, t);
-            modulator.frequency.exponentialRampToValueAtTime(300, t + 2.5);
-            
-            const modGain = audioCtx.createGain();
-            modGain.gain.setValueAtTime(100, t);
-            modGain.gain.linearRampToValueAtTime(500, t + 2.5);
-            
-            // Detuned sub-oscillator for thickness
-            const sub = audioCtx.createOscillator();
-            sub.type = 'sawtooth';
-            sub.frequency.setValueAtTime(48, t);
-            sub.frequency.exponentialRampToValueAtTime(590, t + 2.5);
-
-            // Routing FM
-            modulator.connect(modGain);
-            modGain.connect(carrier.frequency); // Modulate carrier pitch
-
-            // Master volume for engine
-            const masterGain = audioCtx.createGain();
-            masterGain.gain.setValueAtTime(0, t);
-            masterGain.gain.linearRampToValueAtTime(0.3, t + 0.2); // Attack
-            masterGain.gain.setValueAtTime(0.3, t + 2.5); // Sustain
-            masterGain.gain.linearRampToValueAtTime(0, t + 3.5); // Release
-
-            carrier.connect(masterGain);
-            sub.connect(masterGain);
-            masterGain.connect(audioCtx.destination);
-
-            carrier.start(t);
-            modulator.start(t);
-            sub.start(t);
-            
-            carrier.stop(t + 3.5);
-            modulator.stop(t + 3.5);
-            sub.stop(t + 3.5);
-        }
-
-        // 3. EXPLOSION SOUND
-        function playBlastSound() {
-            initAudio();
-            const t = audioCtx.currentTime;
-
-            // White Noise Burst
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = noiseBuffer;
-            
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(3000, t);
-            filter.frequency.exponentialRampToValueAtTime(20, t + 2.0); // Sweep down
-            
-            const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(1.0, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 2.5);
-
-            noise.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-            noise.start(t);
-            noise.stop(t + 2.5);
-
-            // Sub-bass Impact
-            const sub = audioCtx.createOscillator();
-            sub.type = 'sine';
-            sub.frequency.setValueAtTime(120, t);
-            sub.frequency.exponentialRampToValueAtTime(10, t + 1.5);
-            const subGain = audioCtx.createGain();
-            subGain.gain.setValueAtTime(1.0, t);
-            subGain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
-            
-            sub.connect(subGain);
-            subGain.connect(audioCtx.destination);
-            sub.start(t);
-            sub.stop(t + 1.5);
-        }
-        
-        // 4. ALARM SOUND (High-pitched repeating beep)
-        function playAlarmSound() {
-            initAudio();
-            // Stop any existing alarm
-            if(alarmInterval) clearInterval(alarmInterval);
-
-            const beep = () => {
-                const t = audioCtx.currentTime;
-                
-                // Primary high-frequency tone
-                const osc = audioCtx.createOscillator();
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(880, t); // A5 note
-
-                // Volume envelope (quick attack, quick decay)
-                const gain = audioCtx.createGain();
-                gain.gain.setValueAtTime(0.5, t);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15); // Short duration beep
-                
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                osc.start(t);
-                osc.stop(t + 0.15);
-            };
-
-            // Start the beeping loop
-            beep();
-            alarmInterval = setInterval(beep, 500); // Repeat every 500ms
-        }
-
-        // --- Bio Content ---
-        const fullBioText = `root@brijeshzzzz:~# cat bio.txt
-
-Hey! I'm Brijesh — a developer with a strong crush on cybersecurity.
-
-I’m not a “hack the bank” guy… 
-I’m the “secure the system before someone else messes it up” guy 😎
-
-[🛡️] Cybersecurity Enthusiast 
-     I break things only to understand them and fix them.
-
-[💻] Linux is my playground, terminal is my second home.
-
-[🕵️] Ethical hacker mindset: 
-     “Don’t trust anything… even my own code 😂”
-
-[⚙️] Love building clean UIs, fast websites, and testing security the right way.
-
-[🧠] Sometimes I debug like a pro, sometimes I stare at the terminal for 20 minutes.
-
-[😌] Calm outside… inside running 42 tabs, 3 terminals, and 0 patience.
-
-[🚀] Learning DevOps + Cloud so I can hack trees (jk jk).
-
-------------------------------------------------
-Basically: I’m a techie who codes, secures, learns, laughs, and doesn’t break the law.
-
-Cyber guy but in a cool, responsible way — not the jail-type.
-_`;
-
-        let typingInterval = null;
-
-        // --- UI Functions ---
-        function showEmergencyScreen() {
-            terminalOutput.classList.remove('active');
-            emergencyScreen.style.display = 'flex';
-            // Trigger the alarm sound when the emergency message appears
-            playAlarmSound();
-            // Clear bio to prepare for potential re-typing
-            terminalOutput.value = ''; 
-        }
-        
-        function startTerminal() {
-            // Ensure audio context is ready
-            initAudio();
-
-            aboutBtnContainer.style.display = 'none';
-            emergencyScreen.style.display = 'none';
-            terminalOutput.classList.add('active');
-            terminalOutput.value = "";
-            
-            let charIndex = 0;
-            
-            typingInterval = setInterval(() => {
-                if (charIndex < fullBioText.length) {
-                    let currentText = terminalOutput.value;
-                    if(currentText.endsWith('_')) {
-                        currentText = currentText.slice(0, -1);
-                    }
-                    
-                    let nextChar = fullBioText.charAt(charIndex);
-                    
-                    if (nextChar === '_') {
-                         terminalOutput.value = currentText + '_'; 
-                         // End of typing, show emergency screen after a brief delay
-                         setTimeout(showEmergencyScreen, 1500);
-                         clearInterval(typingInterval);
-                         return;
-                    }
-                    
-                    terminalOutput.value = currentText + nextChar + '_'; 
-                    
-                    // Play typewriter sound
-                    if (nextChar.trim() !== '') {
-                        playTypingSound();
-                    }
-                    
-                    charIndex++;
-                    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-                } else {
-                    clearInterval(typingInterval);
-                    // Fallback to ensure emergency screen is shown if timer completes unexpectedly
-                    showEmergencyScreen();
-                }
-            }, 40); // Slightly slower for better audio feedback
-        }
-        
-        // Function now contains the standard redirection command
-        function redirectToIndex() {
-            // Stop the alarm when the user clicks the button
-            if(alarmInterval) clearInterval(alarmInterval);
-
-            // Attempt to redirect to the user's index.html file
-            window.location.href = './index.html';
-            
-            // The following state reset is kept as a fallback/simulation 
-            // in constrained environments (like this Canvas).
-            
-            // Reset state variables
-            isRunning = false;
-            isExploded = false;
-            rpm = 0;
-            sootLevel = 0;
-            shockwaveRadius = 0;
+        // Initialize particle array
+        function initCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            // REDUCED DENSITY for a cleaner look
+            const PARTICLE_COUNT = Math.floor((width * height) / 12000); 
             particles = [];
-            
-            // Clear any timers
-            clearTimeout(blastTimer);
-            if(typingInterval) clearInterval(typingInterval);
-            
-            // Reset UI elements
-            tvContainer.style.display = 'none';
-            emergencyScreen.style.display = 'none';
-            terminalOutput.classList.remove('active');
-            aboutBtnContainer.style.display = 'flex'; // Show initial button
-            
-            startBtn.innerText = "START ENGINE";
-            startBtn.classList.remove('bg-black', 'text-white');
-            startBtn.classList.add('bg-white', 'border-white');
-            statusText.innerText = "Status: Idle...";
-            statusText.style.color = "black";
-            statusText.style.textDecoration = "none";
-            
-            // Force a canvas redraw to clear the soot immediately
-            drawScene(); 
-        }
-
-
-        // --- Scribble Drawing Primitives ---
-        function drawScribbleLine(x1, y1, x2, y2, roughness = 1) {
-            ctx.beginPath();
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.moveTo(x1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness, y1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness);
-            ctx.lineTo(x2 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness, y2 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness);
-            ctx.moveTo(x1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness, y1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness);
-            ctx.bezierCurveTo((x1+x2)/2 + (Math.random() - 0.5)*5, (y1+y2)/2 + (Math.random() - 0.5)*5, (x1+x2)/2 + (Math.random() - 0.5)*5, (y1+y2)/2 + (Math.random() - 0.5)*5, x2 + (Math.random() - 0.5)*JITTER_AMOUNT*roughness, y2 + (Math.random() - 0.5)*JITTER_AMOUNT*roughness);
-            ctx.stroke();
-        }
-
-        function drawScribbleRect(x, y, w, h) {
-            drawScribbleLine(x, y, x + w, y);
-            drawScribbleLine(x + w, y, x + w, y + h);
-            drawScribbleLine(x + w, y + h, x, y + h);
-            drawScribbleLine(x, y + h, x, y);
-        }
-
-        function drawScribbleCircle(x, y, r) {
-            ctx.beginPath();
-            const segments = 12;
-            const step = (Math.PI * 2) / segments;
-            for(let i = 0; i <= segments; i++) {
-                const theta = i * step;
-                const px = x + Math.cos(theta) * r + (Math.random() - 0.5) * JITTER_AMOUNT;
-                const py = y + Math.sin(theta) * r + (Math.random() - 0.5) * JITTER_AMOUNT;
-                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-            }
-            ctx.lineTo(x + r + (Math.random()-0.5)*2, y + (Math.random()-0.5)*2);
-            ctx.stroke();
-        }
-
-        // --- Engine Component ---
-
-        function triggerBlast() {
-            isExploded = true;
-            isRunning = false;
-            shockwaveRadius = 10; 
-            
-            playBlastSound(); // AUDIO TRIGGER
-
-            // Blast Particles
-            for(let i=0; i<80; i++) {
-                const speed = 15 + Math.random() * 30;
-                const angle = Math.random() * Math.PI * 2;
-                particles.push({
-                    x: width/2, 
-                    y: height/2 + 50,
-                    vx: Math.cos(angle) * speed,
-                    vy: Math.sin(angle) * speed,
-                    life: 2.0 + Math.random(),
-                    size: 20 + Math.random() * 60,
-                    isDebris: Math.random() > 0.6,
-                    rotation: Math.random() * Math.PI
-                });
-            }
-            
-            statusText.innerText = "CRITICAL FAILURE!";
-            statusText.style.color = "black";
-            statusText.style.textDecoration = "underline";
-        }
-
-        function updateEngine() {
-            if (isRunning) {
-                const desired = 250; 
-                rpm += (desired - rpm) * 0.05;
-            } else if (isExploded) {
-                 rpm = 0; 
-                 // Fast blackout
-                 if(sootLevel < 1.0) sootLevel += 0.03; 
-                 else {
-                     // SHOW TV when black (centered due to flex in CSS)
-                     tvContainer.style.display = 'flex'; 
-                 }
-                 
-                 shockwaveRadius += 50;
-            } else {
-                rpm *= 0.95;
-                if (rpm < 0.1) rpm = 0;
-            }
-
-            crankAngle += rpm * 0.01;
-            vibration = isExploded ? 0 : (rpm / 100) * 2;
-
-            if (isRunning && rpm > 5) {
-                const bubbleCount = 2 + Math.floor(rpm / 50);
-                const pipeX = width/2 + 120;
-                const pipeY = (height/2 + 50) - 220;
-
-                for(let k=0; k < bubbleCount; k++) {
-                    particles.push({
-                        x: pipeX + (Math.random() - 0.5) * 5, 
-                        y: pipeY + (Math.random() - 0.5) * 5,
-                        vx: 1 + Math.random() * 2,
-                        vy: -2 - Math.random() * 2,
-                        life: 1.0,
-                        size: 3 + Math.random() * 4,
-                        isDebris: false,
-                        rotation: 0
-                    });
-                }
-            }
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.rotation += 0.1;
-                
-                if(p.isDebris) {
-                    p.vx *= 0.95; p.vy += 0.5; p.life -= 0.01;
-                } else {
-                    if(isExploded) p.size += 1.5; 
-                    else { p.size += 0.1; p.vx += (Math.random() - 0.5) * 0.5; }
-                    p.life -= 0.02; p.vx *= 0.95; p.vy *= 0.95; p.vy -= 0.05;
-                }
-                if (p.life <= 0) particles.splice(i, 1);
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push(new Particle());
             }
         }
 
-        function drawScene() {
-            // If fully blacked out, just draw black
-            if (sootLevel >= 1.0) {
-                ctx.fillStyle = "black";
-                ctx.fillRect(0, 0, width, height);
-                return;
-            }
-
-            ctx.clearRect(0, 0, width, height);
-
-            ctx.save();
-            let shakeX = (Math.random() - 0.5) * vibration * 5;
-            let shakeY = (Math.random() - 0.5) * vibration * 5;
+        // Draw connections between nearby particles
+        function connect() {
+            const maxDistance = 150; // REDUCED CONNECTION DISTANCE for sparser lines
             
-            if (isExploded && shockwaveRadius < width) {
-                shakeX = (Math.random() - 0.5) * 50; 
-                shakeY = (Math.random() - 0.5) * 50;
-            }
-            
-            ctx.translate(shakeX, shakeY);
-            ctx.lineWidth = LINE_WIDTH_BASE;
-            ctx.strokeStyle = '#000000';
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a; b < particles.length; b++) {
+                    const dx = particles[a].x - particles[b].x;
+                    const dy = particles[a].y - particles[b].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
 
-            const cx = width / 2;
-            const cy = height / 2 + 50; 
-
-            if (!isExploded || sootLevel < 0.5) {
-                ctx.lineWidth = 4;
-                drawScribbleLine(100, cy + 100, width - 100, cy + 100);
-                
-                ctx.lineWidth = 3;
-                drawScribbleRect(cx - 70, cy - 50, 140, 100);
-                drawScribbleCircle(cx - 60, cy + 40, 4);
-                drawScribbleCircle(cx + 60, cy + 40, 4);
-                drawScribbleRect(cx - 55, cy - 160, 110, 110);
-                for(let i=0; i<6; i++) {
-                    const fy = cy - 150 + (i * 18);
-                    drawScribbleLine(cx - 65, fy, cx + 65, fy);
-                }
-                drawScribbleRect(cx - 60, cy - 210, 120, 50);
-                
-                const crankRadius = 35;
-                const pistonYBase = cy - 110;
-                const crankPinX = cx + Math.cos(crankAngle) * crankRadius;
-                const crankPinY = cy + Math.sin(crankAngle) * crankRadius;
-                const pistonOffset = Math.sin(crankAngle) * crankRadius;
-                const pistonY = pistonYBase + pistonOffset;
-
-                ctx.lineWidth = 2;
-                drawScribbleLine(cx, cy, crankPinX, crankPinY);
-                drawScribbleCircle(cx, cy, 5);
-                drawScribbleLine(crankPinX, crankPinY, cx, pistonY);
-                ctx.lineWidth = 3;
-                drawScribbleRect(cx - 45, pistonY - 40, 90, 40);
-                drawScribbleCircle(cx, pistonY - 20, 4);
-                drawScribbleLine(cx - 45, pistonY - 35, cx + 45, pistonY - 35);
-
-                const valveMove = Math.sin(crankAngle * 0.5) * 8;
-                drawScribbleLine(cx - 60, cy - 190, cx - 100, cy - 190);
-                drawScribbleRect(cx - 130, cy - 210, 30, 40);
-                drawScribbleLine(cx + 60, cy - 190, cx + 100, cy - 190);
-                drawScribbleLine(cx + 100, cy - 190, cx + 120, cy - 220);
-                drawScribbleCircle(cx + 120, cy - 220, 12);
-                ctx.lineWidth = 2;
-                drawScribbleLine(cx - 20, cy - 210, cx - 20, cy - 190 + valveMove);
-                drawScribbleLine(cx - 30, cy - 190 + valveMove, cx - 10, cy - 190 + valveMove);
-                drawScribbleLine(cx + 20, cy - 210, cx + 20, cy - 190 - valveMove);
-                drawScribbleLine(cx + 10, cy - 190 - valveMove, cx + 30, cy - 190 - valveMove);
-                drawScribbleRect(cx - 5, cy - 230, 10, 20);
-
-                ctx.lineWidth = 2;
-                drawScribbleCircle(cx - 110, cy, 70);
-                ctx.save();
-                ctx.translate(cx - 110, cy);
-                ctx.rotate(crankAngle);
-                for(let i=0; i<3; i++) {
-                    ctx.rotate(Math.PI * 2 / 3);
-                    drawScribbleLine(0, 0, 0, 70);
-                }
-                ctx.restore();
-
-                const fanX = cx + 140;
-                const fanY = cy;
-                ctx.beginPath();
-                ctx.moveTo(cx + 40, cy + 20); ctx.lineTo(fanX, fanY + 20); ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(cx + 40, cy - 20); ctx.lineTo(fanX, fanY - 20); ctx.stroke();
-
-                ctx.save();
-                ctx.translate(fanX, fanY);
-                ctx.rotate(crankAngle * 2);
-                for(let i=0; i<4; i++) {
-                    ctx.rotate(Math.PI/2);
-                    drawScribbleRect(-5, -40, 10, 40);
-                }
-                drawScribbleCircle(0, 0, 10);
-                ctx.restore();
-
-                if (isRunning && Math.abs(Math.sin(crankAngle)) > 0.9) {
-                    ctx.strokeStyle = '#000000';
-                    drawScribbleLine(cx, cy - 200, cx - 10, cy - 190);
-                    drawScribbleLine(cx, cy - 200, cx + 10, cy - 190);
-                }
-            }
-            
-            if (isExploded && shockwaveRadius < width * 1.5) {
-                ctx.beginPath();
-                ctx.arc(cx, cy, shockwaveRadius, 0, Math.PI * 2);
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 5 + Math.random() * 5;
-                ctx.stroke();
-            }
-
-            particles.forEach(p => {
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.rotation);
-                
-                if (p.isDebris) {
-                    ctx.fillStyle = 'black';
-                    ctx.beginPath();
-                    ctx.rect(-p.size/2, -p.size/2, p.size, p.size/4); 
-                    ctx.fill();
-                } else {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-                    ctx.fillStyle = 'black';
-                    ctx.fill();
-                    if(p.size < 15 && !isExploded) {
+                    if (distance < maxDistance) {
+                        const opacityValue = 1 - (distance / maxDistance);
+                        // Lines are slightly thinner and slightly more transparent for glow effect
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacityValue * 0.3})`; 
+                        ctx.lineWidth = 0.5; 
                         ctx.beginPath();
-                        ctx.arc(-p.size*0.3, -p.size*0.3, p.size * 0.3, 0, Math.PI * 2);
-                        ctx.fillStyle = 'white';
-                        ctx.fill();
-                    }
-                    if(isExploded) {
-                         ctx.beginPath();
-                         ctx.arc(0, 0, p.size * 0.8, 0, Math.PI * 2);
-                         ctx.strokeStyle = 'white';
-                         ctx.lineWidth = 2;
-                         ctx.stroke();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y);
+                        ctx.stroke();
                     }
                 }
-                ctx.restore();
-            });
-
-            ctx.restore();
-            
-            if (sootLevel > 0) {
-                ctx.fillStyle = `rgba(0, 0, 0, ${sootLevel})`;
-                ctx.fillRect(0, 0, width, height);
             }
         }
 
-        function resize() {
-            width = window.innerWidth;
-            height = window.innerHeight;
-            canvas.width = width;
-            canvas.height = height;
-        }
-
+        // Animation Loop
         function animate() {
-            updateEngine();
-            drawScene();
+            // Clear the canvas each frame with a slightly weaker fade for longer trails
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; 
+            ctx.fillRect(0, 0, width, height); 
+            
+            connect();
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
             requestAnimationFrame(animate);
         }
+        
+        // --- Event Listeners ---
+        
+        // Track mouse movement
+        window.addEventListener('mousemove', (event) => {
+            mouseX = event.x;
+            mouseY = event.y;
+        });
 
-        window.addEventListener('resize', resize);
-        resize();
+        // Handle resize event
+        window.addEventListener('resize', initCanvas);
 
-        startBtn.addEventListener('click', () => {
-            if (!isRunning && !isExploded) {
-                initAudio(); // IMPORTANT: Init audio on user interaction
-                playEngineStartSound(); // AUDIO TRIGGER
+        // --- Intersection Observer for Animations (NEW) ---
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1 // Trigger when 10% of the item is visible
+        };
 
-                isRunning = true;
-                startBtn.innerText = "WARNING: UNSTABLE";
-                startBtn.classList.add('bg-black', 'text-white');
-                startBtn.classList.remove('bg-white', 'border-white');
-                statusText.innerText = "Status: PRESSURE BUILDING...";
-                statusText.style.color = "black";
-                blastTimer = setTimeout(triggerBlast, 3000);
-            } else if (isRunning) {
-                isRunning = false;
-                clearTimeout(blastTimer);
-                startBtn.innerText = "START ENGINE";
-                startBtn.classList.remove('bg-black', 'text-white');
-                startBtn.classList.add('bg-white', 'border-white');
-                statusText.innerText = "Status: Stopping...";
-                statusText.style.color = "black";
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1; // Make it visible
+                    const animationName = entry.target.dataset.animation || 'fade-in-up';
+                    entry.target.style.animation = `${animationName} 0.8s ease-out forwards`;
+                    observer.unobserve(entry.target); // Stop observing once animated
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.animate-fade-in-up, .animate-fade-in-left, .animate-fade-in').forEach(element => {
+            observer.observe(element);
+        });
+
+        // --- Terminal Script Logic ---
+        const output = document.getElementById('terminal-output');
+        const input = document.getElementById('terminal-input');
+        const loadingElement = document.querySelector('.loading-animation');
+        const user = 'brijesh';
+        // FIX: Change hostname to 'aboutme'
+        const hostname = 'aboutme'; 
+        const path = '~';
+
+        const commands = {
+            'help': 'Available commands: <span class="text-white">about</span>, <span class="text-white">skills</span>, <span class="text-white">experience</span>, <span class="text-white">projects</span>, <span class="text-white">contact</span>, <span class="text-white">clear</span>',
+            'about': 'B.E. ECE student with deep expertise in Python, Network Security, and Embedded Systems. Based in Chennai.',
+            'skills': 'Primary stack: Python, Wireshark, mitmproxy, Scapy, BladeRF SDR, Linux/Kali, Zeek Logs/ELK.',
+            'experience': 'Internships at Precision Infomatic (Biometrics/Embedded) and Nirloba IT Pvt Ltd (H/W-S/W Integration).',
+            'projects': 'Key projects: Menaminiki AI (FastAPI), SDR Remote Sensing, and HTTPS Traffic Decryption. Scroll up for links.',
+            'contact': 'Email: <span class="text-terminal-green">skbrijeshbabu20@gmail.com</span> | LinkedIn: <span class="text-terminal-green">brijeshbabusk</span>',
+            'ls': '<span class="text-white">about.txt</span> <span class="text-white">skills.sh</span> <span class="text-white">projects.list</span> <span class="text-white">experience/</span> <span class="text-white">contact.txt</span>',
+            'whoami': user,
+            'whereami': hostname,
+        };
+
+        function addLine(text) {
+            const line = document.createElement('div');
+            line.innerHTML = text;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function executeCommand() {
+            const command = input.value.trim();
+            input.value = '';
+
+            // FIX: Outputting the command, color set to white for user input echo
+            addLine(`<span class="text-terminal-red">${user}@${hostname}</span>:<span class="text-terminal-red">${path}</span>$ <span class="text-white">${command}</span>`);
+
+            const lowerCommand = command.toLowerCase();
+
+            if (lowerCommand === 'clear') {
+                output.innerHTML = '';
+                addLine('<span class="text-white">// System ready.</span>');
+                addLine('<span class="text-white">// Type \'help\' and hit enter below.</span>');
+            } else if (commands[lowerCommand]) {
+                addLine(commands[lowerCommand]);
+            } else if (command === '') {
+                // Do nothing
+            } else {
+                addLine(`<span class="text-error">Error: Command not found: ${command}. Type 'help' for available commands.</span>`);
+            }
+        }
+        
+        // Initial console animation logic
+        let initializationDone = false;
+        function completeInitialization() {
+             if (loadingElement) {
+                loadingElement.remove();
+            }
+            addLine('<span class="text-white">// System ready.</span>');
+            addLine('<span class="text-white">// Type \'help\' and hit enter below.</span>');
+            initializationDone = true;
+        }
+
+
+        input.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && initializationDone) {
+                executeCommand();
             }
         });
 
-        animate();
+        // Initialize Canvas and Terminal on window load
+        window.onload = function() {
+            initCanvas(); // Initialize particle canvas
+            animate();    // Start particle animation
+
+            // Terminal initialization delay for UI effect
+            setTimeout(completeInitialization, 2000); 
+
+            // Initialize terminal
+            if (output && input) {
+                input.focus();
+            }
+        };
+
+        // Re-focus the input if the user clicks anywhere else
+        document.body.addEventListener('click', () => {
+             input.focus();
+        });
+
     </script>
 </body>
 </html>
