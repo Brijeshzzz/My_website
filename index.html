@@ -279,35 +279,26 @@
 </head>
 <body class="w-full h-screen flex flex-col items-center justify-center relative">
 
-    <!-- Title / Signature -->
     <div class="absolute top-8 left-8 transform -rotate-2 select-none pointer-events-none z-50 mix-blend-difference text-white">
         <h1 class="text-4xl" style="color: #000; text-shadow: 0 0 5px white;">brijeshzzzz engine</h1>
     </div>
 
-    <!-- Main Canvas -->
     <canvas id="scribbleCanvas" class="w-full h-full absolute inset-0 z-0"></canvas>
 
-    <!-- TV Overlay (End Screen) -->
     <div id="tvContainer">
-        <!-- The Retro TV -->
         <div class="retro-tv">
-            <!-- Extra Antenna Balls for style -->
             <div class="antenna-ball-left"></div>
             <div class="antenna-ball-right"></div>
 
-            <!-- Screen Area -->
             <div class="tv-screen" id="screenContent">
-                <!-- Initial Button / Emergency Content -->
                 <div id="aboutBtnContainer" class="flex flex-col items-center justify-center h-full w-full">
                     <div class="about-me-btn" onclick="startTerminal()">
                         > ./ABOUT_ME.sh
                     </div>
                 </div>
                 
-                <!-- Terminal Text Area -->
                 <textarea id="terminalOutput" class="terminal-text" readonly></textarea>
                 
-                <!-- Emergency Screen (Hidden initially) -->
                 <div id="emergencyScreen" class="absolute inset-0 bg-black flex-col items-center justify-center p-8 hidden text-red-500 font-mono text-center text-xl" style="font-family: 'VT323', monospace;">
                     <div class="flex flex-col gap-6 w-full items-center">
                         <span class="text-3xl text-red-500 mb-4 animate-pulse">!!! ALERT: SYSTEM COMPROMISED !!!</span>
@@ -321,7 +312,6 @@
                         
                         <div class="mt-8">
                             <p class="text-green-500 mb-4 text-3xl">CALL BRIJESH TO SOLVE</p>
-                            <!-- UPDATED: Using the standard browser redirect command -->
                             <div class="call-brijesh-btn" onclick="redirectToIndex()">
                                 CALL BRIJESH
                             </div>
@@ -330,7 +320,6 @@
                 </div>
             </div>
 
-            <!-- Side Controls Panel -->
             <div class="tv-panel-right">
                 <div class="knob" style="transform: rotate(45deg);"></div>
                 <div class="knob" style="transform: rotate(120deg);"></div>
@@ -343,7 +332,6 @@
         </div>
     </div>
 
-    <!-- Controls -->
     <div class="z-10 absolute bottom-12 flex flex-col items-center gap-4">
         <div id="statusText" class="text-xl mb-2 min-h-[30px] font-bold" style="text-shadow: 0 0 10px white;">Status: Idle...</div>
         <button id="startBtn" class="sketch-btn px-8 py-4 text-2xl rounded-sm bg-white border-white">
@@ -663,8 +651,8 @@ _`;
             // Stop the alarm when the user clicks the button
             if(alarmInterval) clearInterval(alarmInterval);
 
-            // Attempt to redirect to the user's index.html file
-            window.location.href = './index.html';
+            // 🌟🌟🌟 UPDATED TO POINT TO structure.html 🌟🌟🌟
+            window.location.href = './structure.html'; 
             
             // The following state reset is kept as a fallback/simulation 
             // in constrained environments (like this Canvas).
