@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Scribble Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap'); /* Retro Terminal Font */
+
+        body {
+            background-color: #ffffff;
+            /* Subtle paper texture */
+            background-image: 
+                linear-gradient(90deg, transparent 95%, #f0f0f0 95%),
+                linear-gradient(transparent 95%, #f0f0f0 95%);
+            background-size: 20px 20px;
+            font-family: 'Permanent Marker', cursive;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        .sketch-btn {
+            background: transparent;
+            border: 3px solid black;
+            color: black;
+            transition: all 0.1s;
+            position: relative;
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        .sketch-btn:hover {
+            transform: scale(1.05) rotate(-1deg);
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
+        }
+
+        .sketch-btn:active {
+            transform: scale(0.95);
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        /* TV Styles */
+        #tvContainer {
+            display: none; /* Hidden by default */
+            position: absolute;
+            inset: 0;
+            z-index: 60;
+            /* Center the TV */
+            align-items: center;
+            justify-content: center;
+            pointer-events: none; 
+            animation: fadeIn 3s ease-in forwards;
+        }
+
+        .retro-tv {
+            background: #e5e5e5;
+            border: 6px solid #111;
+            border-radius: 30px;
+            box-shadow: 20px 20px 0px rgba(255, 255, 255, 0.1); 
+            padding: 25px;
+            position: relative; /* Centered by flex parent */
+            transform: rotate(-2deg);
+            width: 700px; /* Wider for terminal text */
+            max-width: 95vw;
+            pointer-events: auto; 
+            padding-right: 100px; /* Room for controls */
+        }
+
+        /* Antenna */
+        .retro-tv::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            left: 40%;
+            width: 6px;
+            height: 70px;
+            background: #111;
+            transform: rotate(-30deg);
+            transform-origin: bottom;
+            border-radius: 4px;
+        }
+        .retro-tv::after {
+            content: '';
+            position: absolute;
+            top: -60px;
+            left: 60%;
+            width: 6px;
+            height: 70px;
+            background: #111;
+            transform: rotate(30deg);
+            transform-origin: bottom;
+            border-radius: 4px;
+        }
+
+        /* Antenna balls */
+        .antenna-ball-left {
+            position: absolute;
+            top: -65px;
+            left: 23%;
+            width: 12px;
+            height: 12px;
+            background: #111;
+            border-radius: 50%;
+            z-index: 10;
+        }
+        .antenna-ball-right {
+            position: absolute;
+            top: -65px;
+            left: 75%;
+            width: 12px;
+            height: 12px;
+            background: #111;
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        .tv-screen {
+            background: #000; /* Pure black for terminal */
+            border: 4px solid #333;
+            border-radius: 40px 40px 40px 40px / 30px 30px 30px 30px; 
+            padding: 20px;
+            height: 450px; /* Taller for text */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        
+        /* CRT Scanline effect */
+        .tv-screen::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(0, 255, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* Controls Panel on TV Body */
+        .tv-panel-right {
+            position: absolute;
+            right: 20px;
+            top: 25px;
+            bottom: 25px;
+            width: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            border-left: 2px solid #999;
+            padding-left: 10px;
+        }
+
+        .knob {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #111;
+            border-radius: 50%;
+            position: relative;
+            background: #ccc;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .knob::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            width: 4px;
+            height: 12px;
+            background: #111;
+        }
+
+        .speaker-grill {
+            display: flex;
+            gap: 6px;
+            margin-top: 15px;
+            justify-content: center;
+            width: 100%;
+        }
+        .grill-line {
+            width: 6px;
+            height: 20px;
+            background: #111;
+            border-radius: 3px;
+        }
+
+        .about-me-btn {
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 15px 30px;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(0, 50, 0, 0.3);
+            font-family: 'VT323', monospace;
+            text-align: center;
+            text-shadow: 0 0 5px #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+            z-index: 10;
+        }
+        .about-me-btn:hover {
+            transform: scale(1.1);
+            background: rgba(0, 100, 0, 0.6);
+            box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
+        }
+        
+        .call-brijesh-btn {
+            border: 2px solid #ff0000; /* Red for alert */
+            color: #ff0000;
+            padding: 15px 30px;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(50, 0, 0, 0.3);
+            font-family: 'VT323', monospace;
+            text-align: center;
+            text-shadow: 0 0 5px #ff0000;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+            z-index: 10;
+        }
+        .call-brijesh-btn:hover {
+            transform: scale(1.1);
+            background: rgba(100, 0, 0, 0.6);
+            box-shadow: 0 0 25px rgba(255, 0, 0, 0.8);
+        }
+
+        .terminal-text {
+            background: transparent;
+            border: none;
+            padding: 20px;
+            font-family: 'VT323', monospace;
+            width: 100%;
+            height: 100%;
+            outline: none;
+            font-size: 1.4rem;
+            line-height: 1.2;
+            color: #00ff00; /* Hacker Green */
+            text-shadow: 0 0 4px rgba(0, 255, 0, 0.6);
+            resize: none;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            z-index: 5;
+            display: none; /* Hidden initially */
+        }
+        
+        .terminal-text.active {
+            display: block;
+        }
+        
+        /* Scrollbar for terminal */
+        .terminal-text::-webkit-scrollbar {
+            width: 10px;
+        }
+        .terminal-text::-webkit-scrollbar-track {
+            background: #000; 
+        }
+        .terminal-text::-webkit-scrollbar-thumb {
+            background: #004400; 
+            border-radius: 5px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="w-full h-screen flex flex-col items-center justify-center relative">
+
+    <!-- Title / Signature -->
+    <div class="absolute top-8 left-8 transform -rotate-2 select-none pointer-events-none z-50 mix-blend-difference text-white">
+        <h1 class="text-4xl" style="color: #000; text-shadow: 0 0 5px white;">brijeshzzzz engine</h1>
+    </div>
+
+    <!-- Main Canvas -->
+    <canvas id="scribbleCanvas" class="w-full h-full absolute inset-0 z-0"></canvas>
+
+    <!-- TV Overlay (End Screen) -->
+    <div id="tvContainer">
+        <!-- The Retro TV -->
+        <div class="retro-tv">
+            <!-- Extra Antenna Balls for style -->
+            <div class="antenna-ball-left"></div>
+            <div class="antenna-ball-right"></div>
+
+            <!-- Screen Area -->
+            <div class="tv-screen" id="screenContent">
+                <!-- Initial Button / Emergency Content -->
+                <div id="aboutBtnContainer" class="flex flex-col items-center justify-center h-full w-full">
+                    <div class="about-me-btn" onclick="startTerminal()">
+                        > ./ABOUT_ME.sh
+                    </div>
+                </div>
+                
+                <!-- Terminal Text Area -->
+                <textarea id="terminalOutput" class="terminal-text" readonly></textarea>
+                
+                <!-- Emergency Screen (Hidden initially) -->
+                <div id="emergencyScreen" class="absolute inset-0 bg-black flex-col items-center justify-center p-8 hidden text-red-500 font-mono text-center text-xl" style="font-family: 'VT323', monospace;">
+                    <div class="flex flex-col gap-6 w-full items-center">
+                        <span class="text-3xl text-red-500 mb-4 animate-pulse">!!! ALERT: SYSTEM COMPROMISED !!!</span>
+                        
+                        <p class="text-2xl text-red-400">
+                            SOMETHING GOT HACKED!
+                        </p>
+                        <p class="text-red-300">
+                            SECURITY PROTOCOLS FAILED.
+                        </p>
+                        
+                        <div class="mt-8">
+                            <p class="text-green-500 mb-4 text-3xl">CALL BRIJESH TO SOLVE</p>
+                            <!-- UPDATED: Using the standard browser redirect command -->
+                            <div class="call-brijesh-btn" onclick="redirectToIndex()">
+                                CALL BRIJESH
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side Controls Panel -->
+            <div class="tv-panel-right">
+                <div class="knob" style="transform: rotate(45deg);"></div>
+                <div class="knob" style="transform: rotate(120deg);"></div>
+                <div class="speaker-grill" style="flex-direction: column; gap: 4px;">
+                    <div class="grill-line" style="width: 40px; height: 4px;"></div>
+                    <div class="grill-line" style="width: 40px; height: 4px;"></div>
+                    <div class="grill-line" style="width: 40px; height: 4px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="z-10 absolute bottom-12 flex flex-col items-center gap-4">
+        <div id="statusText" class="text-xl mb-2 min-h-[30px] font-bold" style="text-shadow: 0 0 10px white;">Status: Idle...</div>
+        <button id="startBtn" class="sketch-btn px-8 py-4 text-2xl rounded-sm bg-white border-white">
+            START ENGINE
+        </button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('scribbleCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const statusText = document.getElementById('statusText');
+        const tvContainer = document.getElementById('tvContainer');
+        const aboutBtnContainer = document.getElementById('aboutBtnContainer');
+        const terminalOutput = document.getElementById('terminalOutput');
+        const emergencyScreen = document.getElementById('emergencyScreen');
+
+        let width, height;
+        let isRunning = false;
+        let isExploded = false;
+        let rpm = 0;
+        let vibration = 0;
+        let blastTimer = null;
+        let sootLevel = 0; 
+        let shockwaveRadius = 0; 
+        let alarmInterval = null; // New variable for the alarm sound interval
+        
+        const JITTER_AMOUNT = 1.5; 
+        const LINE_WIDTH_BASE = 2.5;
+        
+        let crankAngle = 0;
+        let particles = [];
+
+        // --- Audio Context & Sound Generation ---
+        let audioCtx = null;
+        let noiseBuffer = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // Create a noise buffer
+                const bufferSize = audioCtx.sampleRate * 2; 
+                noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 1. VINTAGE MECHANICAL KEYBOARD SOUND
+        function playTypingSound() {
+            initAudio();
+            const t = audioCtx.currentTime;
+
+            // "Thock" (Low frequency body)
+            const thud = audioCtx.createOscillator();
+            thud.type = 'sine';
+            thud.frequency.setValueAtTime(150, t);
+            thud.frequency.exponentialRampToValueAtTime(50, t + 0.05);
+            
+            const thudGain = audioCtx.createGain();
+            thudGain.gain.setValueAtTime(0.3, t);
+            thudGain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+            
+            thud.connect(thudGain);
+            thudGain.connect(audioCtx.destination);
+            thud.start(t);
+            thud.stop(t + 0.05);
+
+            // "Click" (High frequency plastic snap)
+            const click = audioCtx.createOscillator();
+            click.type = 'square';
+            click.frequency.setValueAtTime(1200, t);
+            click.frequency.exponentialRampToValueAtTime(600, t + 0.03);
+            
+            const clickGain = audioCtx.createGain();
+            clickGain.gain.setValueAtTime(0.1, t);
+            clickGain.gain.exponentialRampToValueAtTime(0.01, t + 0.03);
+
+            click.connect(clickGain);
+            clickGain.connect(audioCtx.destination);
+            click.start(t);
+            click.stop(t + 0.03);
+            
+            // "Scratch" (Noise texture)
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = noiseBuffer;
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0.2, t);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.04);
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = "highpass";
+            filter.frequency.value = 1000;
+            
+            noise.connect(filter);
+            filter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            noise.start(t);
+            noise.stop(t + 0.04);
+        }
+
+        // 2. SUPERCAR ENGINE START SOUND (FM Synthesis)
+        function playEngineStartSound() {
+            initAudio();
+            const t = audioCtx.currentTime;
+
+            // Main "Scream" (FM Carrier)
+            const carrier = audioCtx.createOscillator();
+            carrier.type = 'sawtooth';
+            carrier.frequency.setValueAtTime(50, t);
+            // Revving up fast to high RPM
+            carrier.frequency.exponentialRampToValueAtTime(600, t + 2.5); 
+            
+            // "Growl" (FM Modulator)
+            const modulator = audioCtx.createOscillator();
+            modulator.type = 'square';
+            modulator.frequency.setValueAtTime(25, t);
+            modulator.frequency.exponentialRampToValueAtTime(300, t + 2.5);
+            
+            const modGain = audioCtx.createGain();
+            modGain.gain.setValueAtTime(100, t);
+            modGain.gain.linearRampToValueAtTime(500, t + 2.5);
+            
+            // Detuned sub-oscillator for thickness
+            const sub = audioCtx.createOscillator();
+            sub.type = 'sawtooth';
+            sub.frequency.setValueAtTime(48, t);
+            sub.frequency.exponentialRampToValueAtTime(590, t + 2.5);
+
+            // Routing FM
+            modulator.connect(modGain);
+            modGain.connect(carrier.frequency); // Modulate carrier pitch
+
+            // Master volume for engine
+            const masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0, t);
+            masterGain.gain.linearRampToValueAtTime(0.3, t + 0.2); // Attack
+            masterGain.gain.setValueAtTime(0.3, t + 2.5); // Sustain
+            masterGain.gain.linearRampToValueAtTime(0, t + 3.5); // Release
+
+            carrier.connect(masterGain);
+            sub.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+
+            carrier.start(t);
+            modulator.start(t);
+            sub.start(t);
+            
+            carrier.stop(t + 3.5);
+            modulator.stop(t + 3.5);
+            sub.stop(t + 3.5);
+        }
+
+        // 3. EXPLOSION SOUND
+        function playBlastSound() {
+            initAudio();
+            const t = audioCtx.currentTime;
+
+            // White Noise Burst
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = noiseBuffer;
+            
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(3000, t);
+            filter.frequency.exponentialRampToValueAtTime(20, t + 2.0); // Sweep down
+            
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(1.0, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 2.5);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            noise.start(t);
+            noise.stop(t + 2.5);
+
+            // Sub-bass Impact
+            const sub = audioCtx.createOscillator();
+            sub.type = 'sine';
+            sub.frequency.setValueAtTime(120, t);
+            sub.frequency.exponentialRampToValueAtTime(10, t + 1.5);
+            const subGain = audioCtx.createGain();
+            subGain.gain.setValueAtTime(1.0, t);
+            subGain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
+            
+            sub.connect(subGain);
+            subGain.connect(audioCtx.destination);
+            sub.start(t);
+            sub.stop(t + 1.5);
+        }
+        
+        // 4. ALARM SOUND (High-pitched repeating beep)
+        function playAlarmSound() {
+            initAudio();
+            // Stop any existing alarm
+            if(alarmInterval) clearInterval(alarmInterval);
+
+            const beep = () => {
+                const t = audioCtx.currentTime;
+                
+                // Primary high-frequency tone
+                const osc = audioCtx.createOscillator();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(880, t); // A5 note
+
+                // Volume envelope (quick attack, quick decay)
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.5, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15); // Short duration beep
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(t);
+                osc.stop(t + 0.15);
+            };
+
+            // Start the beeping loop
+            beep();
+            alarmInterval = setInterval(beep, 500); // Repeat every 500ms
+        }
+
+        // --- Bio Content ---
+        const fullBioText = `root@brijeshzzzz:~# cat bio.txt
+
+Hey! I'm Brijesh — a developer with a strong crush on cybersecurity.
+
+I’m not a “hack the bank” guy… 
+I’m the “secure the system before someone else messes it up” guy 😎
+
+[🛡️] Cybersecurity Enthusiast 
+     I break things only to understand them and fix them.
+
+[💻] Linux is my playground, terminal is my second home.
+
+[🕵️] Ethical hacker mindset: 
+     “Don’t trust anything… even my own code 😂”
+
+[⚙️] Love building clean UIs, fast websites, and testing security the right way.
+
+[🧠] Sometimes I debug like a pro, sometimes I stare at the terminal for 20 minutes.
+
+[😌] Calm outside… inside running 42 tabs, 3 terminals, and 0 patience.
+
+[🚀] Learning DevOps + Cloud so I can hack trees (jk jk).
+
+------------------------------------------------
+Basically: I’m a techie who codes, secures, learns, laughs, and doesn’t break the law.
+
+Cyber guy but in a cool, responsible way — not the jail-type.
+_`;
+
+        let typingInterval = null;
+
+        // --- UI Functions ---
+        function showEmergencyScreen() {
+            terminalOutput.classList.remove('active');
+            emergencyScreen.style.display = 'flex';
+            // Trigger the alarm sound when the emergency message appears
+            playAlarmSound();
+            // Clear bio to prepare for potential re-typing
+            terminalOutput.value = ''; 
+        }
+        
+        function startTerminal() {
+            // Ensure audio context is ready
+            initAudio();
+
+            aboutBtnContainer.style.display = 'none';
+            emergencyScreen.style.display = 'none';
+            terminalOutput.classList.add('active');
+            terminalOutput.value = "";
+            
+            let charIndex = 0;
+            
+            typingInterval = setInterval(() => {
+                if (charIndex < fullBioText.length) {
+                    let currentText = terminalOutput.value;
+                    if(currentText.endsWith('_')) {
+                        currentText = currentText.slice(0, -1);
+                    }
+                    
+                    let nextChar = fullBioText.charAt(charIndex);
+                    
+                    if (nextChar === '_') {
+                         terminalOutput.value = currentText + '_'; 
+                         // End of typing, show emergency screen after a brief delay
+                         setTimeout(showEmergencyScreen, 1500);
+                         clearInterval(typingInterval);
+                         return;
+                    }
+                    
+                    terminalOutput.value = currentText + nextChar + '_'; 
+                    
+                    // Play typewriter sound
+                    if (nextChar.trim() !== '') {
+                        playTypingSound();
+                    }
+                    
+                    charIndex++;
+                    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                } else {
+                    clearInterval(typingInterval);
+                    // Fallback to ensure emergency screen is shown if timer completes unexpectedly
+                    showEmergencyScreen();
+                }
+            }, 40); // Slightly slower for better audio feedback
+        }
+        
+        // Function now contains the standard redirection command
+        function redirectToIndex() {
+            // Stop the alarm when the user clicks the button
+            if(alarmInterval) clearInterval(alarmInterval);
+
+            // Attempt to redirect to the user's index.html file
+            window.location.href = './index.html';
+            
+            // The following state reset is kept as a fallback/simulation 
+            // in constrained environments (like this Canvas).
+            
+            // Reset state variables
+            isRunning = false;
+            isExploded = false;
+            rpm = 0;
+            sootLevel = 0;
+            shockwaveRadius = 0;
+            particles = [];
+            
+            // Clear any timers
+            clearTimeout(blastTimer);
+            if(typingInterval) clearInterval(typingInterval);
+            
+            // Reset UI elements
+            tvContainer.style.display = 'none';
+            emergencyScreen.style.display = 'none';
+            terminalOutput.classList.remove('active');
+            aboutBtnContainer.style.display = 'flex'; // Show initial button
+            
+            startBtn.innerText = "START ENGINE";
+            startBtn.classList.remove('bg-black', 'text-white');
+            startBtn.classList.add('bg-white', 'border-white');
+            statusText.innerText = "Status: Idle...";
+            statusText.style.color = "black";
+            statusText.style.textDecoration = "none";
+            
+            // Force a canvas redraw to clear the soot immediately
+            drawScene(); 
+        }
+
+
+        // --- Scribble Drawing Primitives ---
+        function drawScribbleLine(x1, y1, x2, y2, roughness = 1) {
+            ctx.beginPath();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.moveTo(x1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness, y1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness);
+            ctx.lineTo(x2 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness, y2 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness);
+            ctx.moveTo(x1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness, y1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness);
+            ctx.bezierCurveTo((x1+x2)/2 + (Math.random() - 0.5)*5, (y1+y2)/2 + (Math.random() - 0.5)*5, (x1+x2)/2 + (Math.random() - 0.5)*5, (y1+y2)/2 + (Math.random() - 0.5)*5, x2 + (Math.random() - 0.5)*JITTER_AMOUNT*roughness, y2 + (Math.random() - 0.5)*JITTER_AMOUNT*roughness);
+            ctx.stroke();
+        }
+
+        function drawScribbleRect(x, y, w, h) {
+            drawScribbleLine(x, y, x + w, y);
+            drawScribbleLine(x + w, y, x + w, y + h);
+            drawScribbleLine(x + w, y + h, x, y + h);
+            drawScribbleLine(x, y + h, x, y);
+        }
+
+        function drawScribbleCircle(x, y, r) {
+            ctx.beginPath();
+            const segments = 12;
+            const step = (Math.PI * 2) / segments;
+            for(let i = 0; i <= segments; i++) {
+                const theta = i * step;
+                const px = x + Math.cos(theta) * r + (Math.random() - 0.5) * JITTER_AMOUNT;
+                const py = y + Math.sin(theta) * r + (Math.random() - 0.5) * JITTER_AMOUNT;
+                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.lineTo(x + r + (Math.random()-0.5)*2, y + (Math.random()-0.5)*2);
+            ctx.stroke();
+        }
+
+        // --- Engine Component ---
+
+        function triggerBlast() {
+            isExploded = true;
+            isRunning = false;
+            shockwaveRadius = 10; 
+            
+            playBlastSound(); // AUDIO TRIGGER
+
+            // Blast Particles
+            for(let i=0; i<80; i++) {
+                const speed = 15 + Math.random() * 30;
+                const angle = Math.random() * Math.PI * 2;
+                particles.push({
+                    x: width/2, 
+                    y: height/2 + 50,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 2.0 + Math.random(),
+                    size: 20 + Math.random() * 60,
+                    isDebris: Math.random() > 0.6,
+                    rotation: Math.random() * Math.PI
+                });
+            }
+            
+            statusText.innerText = "CRITICAL FAILURE!";
+            statusText.style.color = "black";
+            statusText.style.textDecoration = "underline";
+        }
+
+        function updateEngine() {
+            if (isRunning) {
+                const desired = 250; 
+                rpm += (desired - rpm) * 0.05;
+            } else if (isExploded) {
+                 rpm = 0; 
+                 // Fast blackout
+                 if(sootLevel < 1.0) sootLevel += 0.03; 
+                 else {
+                     // SHOW TV when black (centered due to flex in CSS)
+                     tvContainer.style.display = 'flex'; 
+                 }
+                 
+                 shockwaveRadius += 50;
+            } else {
+                rpm *= 0.95;
+                if (rpm < 0.1) rpm = 0;
+            }
+
+            crankAngle += rpm * 0.01;
+            vibration = isExploded ? 0 : (rpm / 100) * 2;
+
+            if (isRunning && rpm > 5) {
+                const bubbleCount = 2 + Math.floor(rpm / 50);
+                const pipeX = width/2 + 120;
+                const pipeY = (height/2 + 50) - 220;
+
+                for(let k=0; k < bubbleCount; k++) {
+                    particles.push({
+                        x: pipeX + (Math.random() - 0.5) * 5, 
+                        y: pipeY + (Math.random() - 0.5) * 5,
+                        vx: 1 + Math.random() * 2,
+                        vy: -2 - Math.random() * 2,
+                        life: 1.0,
+                        size: 3 + Math.random() * 4,
+                        isDebris: false,
+                        rotation: 0
+                    });
+                }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.rotation += 0.1;
+                
+                if(p.isDebris) {
+                    p.vx *= 0.95; p.vy += 0.5; p.life -= 0.01;
+                } else {
+                    if(isExploded) p.size += 1.5; 
+                    else { p.size += 0.1; p.vx += (Math.random() - 0.5) * 0.5; }
+                    p.life -= 0.02; p.vx *= 0.95; p.vy *= 0.95; p.vy -= 0.05;
+                }
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function drawScene() {
+            // If fully blacked out, just draw black
+            if (sootLevel >= 1.0) {
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, width, height);
+                return;
+            }
+
+            ctx.clearRect(0, 0, width, height);
+
+            ctx.save();
+            let shakeX = (Math.random() - 0.5) * vibration * 5;
+            let shakeY = (Math.random() - 0.5) * vibration * 5;
+            
+            if (isExploded && shockwaveRadius < width) {
+                shakeX = (Math.random() - 0.5) * 50; 
+                shakeY = (Math.random() - 0.5) * 50;
+            }
+            
+            ctx.translate(shakeX, shakeY);
+            ctx.lineWidth = LINE_WIDTH_BASE;
+            ctx.strokeStyle = '#000000';
+
+            const cx = width / 2;
+            const cy = height / 2 + 50; 
+
+            if (!isExploded || sootLevel < 0.5) {
+                ctx.lineWidth = 4;
+                drawScribbleLine(100, cy + 100, width - 100, cy + 100);
+                
+                ctx.lineWidth = 3;
+                drawScribbleRect(cx - 70, cy - 50, 140, 100);
+                drawScribbleCircle(cx - 60, cy + 40, 4);
+                drawScribbleCircle(cx + 60, cy + 40, 4);
+                drawScribbleRect(cx - 55, cy - 160, 110, 110);
+                for(let i=0; i<6; i++) {
+                    const fy = cy - 150 + (i * 18);
+                    drawScribbleLine(cx - 65, fy, cx + 65, fy);
+                }
+                drawScribbleRect(cx - 60, cy - 210, 120, 50);
+                
+                const crankRadius = 35;
+                const pistonYBase = cy - 110;
+                const crankPinX = cx + Math.cos(crankAngle) * crankRadius;
+                const crankPinY = cy + Math.sin(crankAngle) * crankRadius;
+                const pistonOffset = Math.sin(crankAngle) * crankRadius;
+                const pistonY = pistonYBase + pistonOffset;
+
+                ctx.lineWidth = 2;
+                drawScribbleLine(cx, cy, crankPinX, crankPinY);
+                drawScribbleCircle(cx, cy, 5);
+                drawScribbleLine(crankPinX, crankPinY, cx, pistonY);
+                ctx.lineWidth = 3;
+                drawScribbleRect(cx - 45, pistonY - 40, 90, 40);
+                drawScribbleCircle(cx, pistonY - 20, 4);
+                drawScribbleLine(cx - 45, pistonY - 35, cx + 45, pistonY - 35);
+
+                const valveMove = Math.sin(crankAngle * 0.5) * 8;
+                drawScribbleLine(cx - 60, cy - 190, cx - 100, cy - 190);
+                drawScribbleRect(cx - 130, cy - 210, 30, 40);
+                drawScribbleLine(cx + 60, cy - 190, cx + 100, cy - 190);
+                drawScribbleLine(cx + 100, cy - 190, cx + 120, cy - 220);
+                drawScribbleCircle(cx + 120, cy - 220, 12);
+                ctx.lineWidth = 2;
+                drawScribbleLine(cx - 20, cy - 210, cx - 20, cy - 190 + valveMove);
+                drawScribbleLine(cx - 30, cy - 190 + valveMove, cx - 10, cy - 190 + valveMove);
+                drawScribbleLine(cx + 20, cy - 210, cx + 20, cy - 190 - valveMove);
+                drawScribbleLine(cx + 10, cy - 190 - valveMove, cx + 30, cy - 190 - valveMove);
+                drawScribbleRect(cx - 5, cy - 230, 10, 20);
+
+                ctx.lineWidth = 2;
+                drawScribbleCircle(cx - 110, cy, 70);
+                ctx.save();
+                ctx.translate(cx - 110, cy);
+                ctx.rotate(crankAngle);
+                for(let i=0; i<3; i++) {
+                    ctx.rotate(Math.PI * 2 / 3);
+                    drawScribbleLine(0, 0, 0, 70);
+                }
+                ctx.restore();
+
+                const fanX = cx + 140;
+                const fanY = cy;
+                ctx.beginPath();
+                ctx.moveTo(cx + 40, cy + 20); ctx.lineTo(fanX, fanY + 20); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(cx + 40, cy - 20); ctx.lineTo(fanX, fanY - 20); ctx.stroke();
+
+                ctx.save();
+                ctx.translate(fanX, fanY);
+                ctx.rotate(crankAngle * 2);
+                for(let i=0; i<4; i++) {
+                    ctx.rotate(Math.PI/2);
+                    drawScribbleRect(-5, -40, 10, 40);
+                }
+                drawScribbleCircle(0, 0, 10);
+                ctx.restore();
+
+                if (isRunning && Math.abs(Math.sin(crankAngle)) > 0.9) {
+                    ctx.strokeStyle = '#000000';
+                    drawScribbleLine(cx, cy - 200, cx - 10, cy - 190);
+                    drawScribbleLine(cx, cy - 200, cx + 10, cy - 190);
+                }
+            }
+            
+            if (isExploded && shockwaveRadius < width * 1.5) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, shockwaveRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 5 + Math.random() * 5;
+                ctx.stroke();
+            }
+
+            particles.forEach(p => {
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                
+                if (p.isDebris) {
+                    ctx.fillStyle = 'black';
+                    ctx.beginPath();
+                    ctx.rect(-p.size/2, -p.size/2, p.size, p.size/4); 
+                    ctx.fill();
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = 'black';
+                    ctx.fill();
+                    if(p.size < 15 && !isExploded) {
+                        ctx.beginPath();
+                        ctx.arc(-p.size*0.3, -p.size*0.3, p.size * 0.3, 0, Math.PI * 2);
+                        ctx.fillStyle = 'white';
+                        ctx.fill();
+                    }
+                    if(isExploded) {
+                         ctx.beginPath();
+                         ctx.arc(0, 0, p.size * 0.8, 0, Math.PI * 2);
+                         ctx.strokeStyle = 'white';
+                         ctx.lineWidth = 2;
+                         ctx.stroke();
+                    }
+                }
+                ctx.restore();
+            });
+
+            ctx.restore();
+            
+            if (sootLevel > 0) {
+                ctx.fillStyle = `rgba(0, 0, 0, ${sootLevel})`;
+                ctx.fillRect(0, 0, width, height);
+            }
+        }
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+
+        function animate() {
+            updateEngine();
+            drawScene();
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        startBtn.addEventListener('click', () => {
+            if (!isRunning && !isExploded) {
+                initAudio(); // IMPORTANT: Init audio on user interaction
+                playEngineStartSound(); // AUDIO TRIGGER
+
+                isRunning = true;
+                startBtn.innerText = "WARNING: UNSTABLE";
+                startBtn.classList.add('bg-black', 'text-white');
+                startBtn.classList.remove('bg-white', 'border-white');
+                statusText.innerText = "Status: PRESSURE BUILDING...";
+                statusText.style.color = "black";
+                blastTimer = setTimeout(triggerBlast, 3000);
+            } else if (isRunning) {
+                isRunning = false;
+                clearTimeout(blastTimer);
+                startBtn.innerText = "START ENGINE";
+                startBtn.classList.remove('bg-black', 'text-white');
+                startBtn.classList.add('bg-white', 'border-white');
+                statusText.innerText = "Status: Stopping...";
+                statusText.style.color = "black";
+            }
+        });
+
+        animate();
+    </script>
+</body>
+</html>
