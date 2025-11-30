@@ -19,6 +19,13 @@
             position: relative; /* Needed for the noise overlay */
         }
         
+        /* Animation for liquid background shift */
+        @keyframes liquid-shift {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
         /* Monochrome Noise Overlay for high-tech aesthetic */
         body::before {
             content: '';
@@ -28,7 +35,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            opacity: 0.05; /* Very subtle noise */
+            opacity: 0.08; /* Slightly less subtle noise */
             z-index: -5;
             /* Simple monochrome noise pattern (can be replaced by a texture if needed) */
             background-image: repeating-linear-gradient(
@@ -38,7 +45,8 @@
                 #fff 1px,
                 #fff 2px
             );
-            background-size: 100% 100%;
+            background-size: 200% 200%; /* Increased size for shifting */
+            animation: liquid-shift 60s linear infinite; /* Slow, constant movement */
         }
 
         /* Custom Colors */
@@ -47,12 +55,75 @@
         .text-terminal-green { color: #00ff41; } /* Classic Terminal Green */
         .text-terminal-red { color: #ff0041; } /* Red Terminal Text Color */
         
+        /* --- LIQUID GLASS EFFECTS --- */
+
+        .liquid-glass {
+            /* Base Glass Properties */
+            background-color: rgba(17, 17, 17, 0.4); /* Darker and more transparent */
+            backdrop-filter: blur(15px); /* Stronger blur for more depth */
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15); /* Slightly brighter white border */
+            position: relative;
+            overflow: hidden; /* Contains the ripple */
+            transition: box-shadow 0.3s ease-out; /* Smooth transition for base shadow */
+        }
+
         /* Custom Hover Effect */
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -2px rgba(255, 255, 255, 0.05);
+        .card-hover {
+             transition: all 0.3s ease-out;
+             /* Base shadow for glass lift off the page */
+             box-shadow: 0 5px 15px -3px rgba(0, 0, 0, 0.5); 
         }
         
+        .card-hover:hover {
+            transform: translateY(-10px); /* Even deeper lift */
+            /* Enhanced Terminal Green Glow on hover */
+            box-shadow: 0 30px 60px -12px rgba(0, 255, 65, 0.4), 
+                        0 10px 20px -5px rgba(0, 255, 65, 0.3); 
+        }
+
+        /* Liquid Ripple Animation */
+        @keyframes liquid-ripple {
+            0% { 
+                opacity: 0; 
+                transform: scale(0);
+                background: rgba(0, 255, 65, 0.15);
+            }
+            50% { 
+                opacity: 0.5;
+                transform: scale(2.5); /* Larger scale */
+                background: rgba(0, 255, 65, 0.25);
+            }
+            100% { 
+                opacity: 0; 
+                transform: scale(4); /* Final size */
+            }
+        }
+        
+        /* Ripple Element on Hover (Must be applied to a parent div) */
+        .liquid-glass-ripple {
+             position: relative;
+        }
+
+        .liquid-glass-ripple::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+            background: transparent;
+            transition: background 0.5s;
+        }
+
+        .liquid-glass-ripple:hover::before {
+             /* Trigger the animation on hover */
+             animation: liquid-ripple 1.8s ease-out;
+        }
+
         /* Monochrome Gradient for Heading */
         .mono-gradient {
             background-image: linear-gradient(to right, #ffffff, #aaaaaa); 
@@ -80,8 +151,10 @@
              display: flex;
              align-items: center;
              white-space: nowrap;
-             /* FIX: Allow a scrollbar if the prompt is impossibly long, though JS should prevent it */
              overflow-x: auto; 
+             /* REMOVED: Subtle glow for terminal UX */
+             /* box-shadow: 0 0 5px rgba(0, 255, 65, 0.5); */ 
+             border-radius: 4px;
         }
         
         /* FIX: Prevents input from wrapping inside the terminal prompt */
@@ -89,8 +162,7 @@
             flex-grow: 1; 
             min-width: 0; 
             box-sizing: border-box;
-            /* FIX: Make sure the input text is the same size/style as the output */
-            font-size: 0.875rem; /* text-sm equivalent */
+            font-size: 0.875rem; 
             line-height: 1.5;
         }
 
@@ -220,7 +292,7 @@
         </section>
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-            <section id="about" class="bg-[#111111] shadow-2xl rounded-3xl p-8 lg:p-12 border border-gray-800 fade-in-target animate-fade-in-up">
+            <section id="about" class="liquid-glass shadow-2xl rounded-3xl p-8 lg:p-12 border-gray-800 fade-in-target animate-fade-in-up">
                 <h2 class="text-3xl font-bold mb-8 border-b border-gray-700 pb-4">
                     <span class="text-white font-mono">~$</span> Profile Overview
                 </h2>
@@ -265,7 +337,7 @@
                 </h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     
-                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <div class="p-6 liquid-glass rounded-xl shadow-xl transition duration-500 card-hover liquid-glass-ripple fade-in-target animate-fade-in-up" style="animation-delay: 0.2s;">
                         <p class="text-4xl mb-3 text-white">
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.007 12.007 0 002.944 12c0 1.259.231 2.497.661 3.676A11.99 11.99 0 0012 21.056a11.99 11.99 0 008.395-4.882c.43-.918.661-1.957.661-3.04a12.007 12.007 0 00-.374-4.04z"></path></svg>
                         </p>
@@ -278,7 +350,7 @@
                         </ul>
                     </div>
 
-                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="p-6 liquid-glass rounded-xl shadow-xl transition duration-500 card-hover liquid-glass-ripple fade-in-target animate-fade-in-up" style="animation-delay: 0.4s;">
                         <p class="text-4xl mb-3 text-terminal-green">🐍</p>
                         <h3 class="font-bold text-xl text-white mb-3">Python & APIs</h3>
                         <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
@@ -289,7 +361,7 @@
                         </ul>
                     </div>
 
-                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.6s;">
+                    <div class="p-6 liquid-glass rounded-xl shadow-xl transition duration-500 card-hover liquid-glass-ripple fade-in-target animate-fade-in-up" style="animation-delay: 0.6s;">
                         <p class="text-4xl mb-3 text-white">📡</p>
                         <h3 class="font-bold text-xl text-white mb-3">SDR & Embedded</h3>
                         <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
@@ -300,7 +372,7 @@
                         </ul>
                     </div>
 
-                    <div class="p-6 bg-[#111111] rounded-xl shadow-xl border border-gray-800 transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.8s;">
+                    <div class="p-6 liquid-glass rounded-xl shadow-xl transition duration-500 card-hover liquid-glass-ripple fade-in-target animate-fade-in-up" style="animation-delay: 0.8s;">
                         <p class="text-4xl mb-3 text-white">🖥️</p>
                         <h3 class="font-bold text-xl text-white mb-3">Data & Operating Systems</h3>
                         <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
@@ -321,7 +393,7 @@
                 <div class="space-y-8 max-w-4xl mx-auto">
                     <div class="relative pl-10 border-l-2 border-terminal-green fade-in-target animate-fade-in-left" style="animation-delay: 0.2s;">
                         <div class="absolute w-4 h-4 rounded-full bg-terminal-green -left-2 top-0"></div>
-                        <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-800">
+                        <div class="liquid-glass p-6 rounded-xl shadow-2xl transition duration-500 card-hover liquid-glass-ripple border-gray-800">
                             <h3 class="text-2xl font-semibold text-white">Intern - Precision Infomatic</h3>
                             <p class="text-sm text-gray-500 mb-3">June 2025 - July 2025 | Chennai</p>
                             <ul class="list-disc list-inside text-gray-300 space-y-2">
@@ -333,7 +405,7 @@
                     
                     <div class="relative pl-10 border-l-2 border-white fade-in-target animate-fade-in-left" style="animation-delay: 0.4s;">
                         <div class="absolute w-4 h-4 rounded-full bg-white -left-2 top-0"></div>
-                        <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover border border-gray-800">
+                        <div class="liquid-glass p-6 rounded-xl shadow-2xl transition duration-500 card-hover liquid-glass-ripple border-gray-800">
                             <h3 class="text-2xl font-semibold text-white">Intern - Nirloba IT Pvt Ltd</h3>
                             <p class="text-sm text-gray-500 mb-3">May 2024 - June 2024</p>
                             <ul class="list-disc list-inside text-gray-300 space-y-2">
@@ -351,7 +423,7 @@
                 </h2>
 
                 <div class="grid md:grid-cols-3 gap-8">
-                    <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <div class="liquid-glass p-6 rounded-xl shadow-2xl transition duration-500 card-hover liquid-glass-ripple fade-in-target animate-fade-in-up" style="animation-delay: 0.2s;">
                         <p class="text-4xl text-white mb-3">🤖</p>
                         <h3 class="text-xl font-semibold text-white mb-2">Menaminiki AI Chatbot</h3>
                         <p class="text-xs text-gray-500 font-medium mb-3"><span class="text-terminal-green">Python</span> | <span class="text-terminal-green">FastAPI</span> | <span class="text-terminal-green">MongoDB Atlas</span></p>
@@ -364,7 +436,7 @@
                         </a>
                     </div>
 
-                    <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="liquid-glass p-6 rounded-xl shadow-2xl transition duration-500 card-hover liquid-glass-ripple fade-in-target animate-fade-in-up" style="animation-delay: 0.4s;">
                         <p class="text-4xl text-terminal-green mb-3">📡</p>
                         <h3 class="font-bold text-xl text-white mb-2">SDR Remote Sensing</h3>
                         <p class="text-xs text-gray-500 font-medium mb-3"><span class="text-terminal-green">BladeRF Micro</span> | <span class="text-terminal-green">I/Q Signal</span> | <span class="text-terminal-green">Deep Learning</span></p>
@@ -377,7 +449,7 @@
                         </a>
                     </div>
 
-                    <div class="bg-[#111111] p-6 rounded-xl shadow-2xl transition duration-500 card-hover fade-in-target animate-fade-in-up" style="animation-delay: 0.6s;">
+                    <div class="liquid-glass p-6 rounded-xl shadow-2xl transition duration-500 card-hover liquid-glass-ripple fade-in-target animate-fade-in-up" style="animation-delay: 0.6s;">
                         <p class="text-4xl text-white mb-3">🔓</p>
                         <h3 class="text-xl font-semibold text-white mb-2">HTTPS Traffic Decryption</h3>
                         <p class="text-xs text-gray-500 font-medium mb-3"><span class="text-terminal-green">mitmproxy</span> | <span class="text-terminal-green">Wireshark</span> | <span class="text-terminal-green">SSL/TLS</span></p>
@@ -392,7 +464,7 @@
                 </div>
             </section>
 
-            <section id="contact" class="py-12 text-center bg-[#111111] rounded-2xl shadow-2xl p-8 border border-gray-800 fade-in-target animate-fade-in-up">
+            <section id="contact" class="py-12 text-center liquid-glass rounded-2xl shadow-2xl p-8 border-gray-800 fade-in-target animate-fade-in-up">
                 <h2 class="text-3xl font-bold text-white mb-4">
                     Let's Connect and Secure the Future
                 </h2>
