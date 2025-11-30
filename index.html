@@ -62,8 +62,8 @@
             padding: 25px;
             position: relative; /* Centered by flex parent */
             transform: rotate(-2deg);
-            width: 700px; /* Wider for terminal text */
-            max-width: 95vw;
+            width: 95%; /* Make it responsive */
+            max-width: 700px;
             pointer-events: auto; 
             padding-right: 100px; /* Room for controls */
         }
@@ -274,6 +274,59 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
+        }
+
+        /* --- Mobile Specific Adjustments (Max 640px) --- */
+        @media (max-width: 640px) {
+            .retro-tv {
+                padding: 15px; /* Smaller overall padding */
+                padding-right: 70px; /* Less intrusive padding for the controls */
+                transform: rotate(0deg); /* Reduce rotation on tiny screens */
+            }
+            
+            .tv-panel-right {
+                right: 10px; 
+                width: 40px; /* Even narrower panel */
+                gap: 10px; /* Closer knobs */
+            }
+            
+            .knob {
+                width: 30px;
+                height: 30px;
+                border-width: 3px;
+            }
+            
+            .knob::after {
+                top: 3px;
+                height: 8px;
+                width: 3px;
+            }
+            
+            .tv-screen {
+                padding: 10px; /* Smaller screen padding */
+                height: 350px; /* Shorter screen height */
+                border-radius: 20px 20px 20px 20px / 15px 15px 15px 15px; /* Smaller radius */
+            }
+            
+            .terminal-text {
+                font-size: 1.1rem; /* Smaller, more legible font size */
+            }
+            
+            .about-me-btn, .call-brijesh-btn {
+                padding: 10px 20px;
+                font-size: 1.5rem;
+            }
+            
+            /* Repositioning fixed text for mobile */
+            .absolute.top-8.left-8 {
+                top: 4px;
+                left: 4px;
+                transform: rotate(0deg);
+            }
+            
+            .absolute.bottom-12 {
+                bottom: 4px;
+            }
         }
     </style>
 </head>
@@ -887,6 +940,7 @@ _`;
                     ctx.rotate(Math.PI * 2 / 3);
                     drawScribbleLine(0, 0, 0, 70);
                 }
+                drawScribbleCircle(0, 0, 5);
                 ctx.restore();
 
                 const fanX = cx + 140;
