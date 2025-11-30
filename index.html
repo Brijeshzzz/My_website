@@ -47,7 +47,7 @@
             position: absolute;
             inset: 0;
             z-index: 60;
-            /* Center the TV */
+            /* Center the TV (Default for Desktop) */
             align-items: center;
             justify-content: center;
             pointer-events: none; 
@@ -66,6 +66,8 @@
             max-width: 700px;
             pointer-events: auto; 
             padding-right: 100px; /* Room for controls */
+            /* Default desktop height */
+            height: 550px; 
         }
 
         /* Antenna */
@@ -278,16 +280,25 @@
 
         /* --- Mobile Specific Adjustments (Max 640px) --- */
         @media (max-width: 640px) {
+            
+            /* CHANGE 1: Align items to the bottom, pushing the TV towards the bottom edge */
+            #tvContainer {
+                align-items: flex-end; /* Align content to the bottom */
+                padding-bottom: 0; /* Remove padding to touch the bottom edge */
+            }
+            
+            /* CHANGE 2: Set the height of the retro-tv to cover center-to-bottom area and remove vertical translation */
             .retro-tv {
-                padding: 15px; /* Smaller overall padding */
-                padding-right: 70px; /* Less intrusive padding for the controls */
-                transform: rotate(0deg); /* Reduce rotation on tiny screens */
+                height: 75vh; /* Increase height to push the top higher */
+                transform: rotate(0deg); /* Remove rotation */
+                padding: 15px; 
+                padding-right: 70px; 
             }
             
             .tv-panel-right {
                 right: 10px; 
-                width: 40px; /* Even narrower panel */
-                gap: 10px; /* Closer knobs */
+                width: 40px; 
+                gap: 10px; 
             }
             
             .knob {
@@ -303,13 +314,13 @@
             }
             
             .tv-screen {
-                padding: 10px; /* Smaller screen padding */
-                height: 350px; /* Shorter screen height */
-                border-radius: 20px 20px 20px 20px / 15px 15px 15px 15px; /* Smaller radius */
+                padding: 10px; 
+                height: 85%; /* Let the screen fill the available height within the TV box */
+                border-radius: 20px 20px 20px 20px / 15px 15px 15px 15px; 
             }
             
             .terminal-text {
-                font-size: 1.1rem; /* Smaller, more legible font size */
+                font-size: 1.1rem; 
             }
             
             .about-me-btn, .call-brijesh-btn {
@@ -642,12 +653,19 @@ _`;
 
         // --- UI Functions ---
         function showEmergencyScreen() {
+            // FIX 1: Ensure typing interval is cleared immediately
+            if(typingInterval) clearInterval(typingInterval);
+            
+            // FIX 2: Explicitly hide the terminal output (textarea)
             terminalOutput.classList.remove('active');
+            
+            // FIX 3: Clear any lingering text from the terminal output
+            terminalOutput.value = '';
+
             emergencyScreen.style.display = 'flex';
+            
             // Trigger the alarm sound when the emergency message appears
             playAlarmSound();
-            // Clear bio to prepare for potential re-typing
-            terminalOutput.value = ''; 
         }
         
         function startTerminal() {
