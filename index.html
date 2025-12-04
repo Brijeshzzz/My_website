@@ -3,1069 +3,476 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Scribble Engine</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>SYSTEM_CRITICAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap'); /* Retro Terminal Font */
-
-        body {
-            background-color: #ffffff;
-            /* Subtle paper texture */
-            background-image: 
-                linear-gradient(90deg, transparent 95%, #f0f0f0 95%),
-                linear-gradient(transparent 95%, #f0f0f0 95%);
-            background-size: 20px 20px;
-            font-family: 'Permanent Marker', cursive;
-            overflow: hidden;
-            cursor: crosshair;
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: #000; overflow: hidden;
+            font-family: 'Courier New', monospace;
+            cursor: none; user-select: none;
         }
 
-        .sketch-btn {
-            background: transparent;
-            border: 3px solid black;
-            color: black;
-            transition: all 0.1s;
-            position: relative;
-            box-shadow: 5px 5px 0px rgba(0,0,0,0.1);
-            cursor: pointer;
+        /* --- 3D CANVAS (Scary Tunnel) --- */
+        #warp-canvas {
+            position: absolute; top: 0; left: 0;
+            z-index: 1; filter: contrast(150%) brightness(1.5);
         }
 
-        .sketch-btn:hover {
-            transform: scale(1.05) rotate(-1deg);
-            box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
-        }
-
-        .sketch-btn:active {
-            transform: scale(0.95);
-            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
-        }
-
-        /* TV Styles */
-        #tvContainer {
-            display: none; /* Hidden by default */
-            position: absolute;
-            inset: 0;
-            z-index: 60;
-            /* Center the TV (Default for Desktop) */
-            align-items: center;
-            justify-content: center;
-            pointer-events: none; 
-            animation: fadeIn 3s ease-in forwards;
-        }
-
-        .retro-tv {
-            background: #e5e5e5;
-            border: 6px solid #111;
-            border-radius: 30px;
-            box-shadow: 20px 20px 0px rgba(255, 255, 255, 0.1); 
-            padding: 25px;
-            position: relative; /* Centered by flex parent */
-            transform: rotate(-2deg);
-            width: 95%; /* Make it responsive */
-            max-width: 700px;
-            pointer-events: auto; 
-            padding-right: 100px; /* Room for controls */
-            /* Default desktop height */
-            height: 550px; 
-        }
-
-        /* Antenna */
-        .retro-tv::before {
-            content: '';
-            position: absolute;
-            top: -60px;
-            left: 40%;
-            width: 6px;
-            height: 70px;
-            background: #111;
-            transform: rotate(-30deg);
-            transform-origin: bottom;
-            border-radius: 4px;
-        }
-        .retro-tv::after {
-            content: '';
-            position: absolute;
-            top: -60px;
-            left: 60%;
-            width: 6px;
-            height: 70px;
-            background: #111;
-            transform: rotate(30deg);
-            transform-origin: bottom;
-            border-radius: 4px;
-        }
-
-        /* Antenna balls */
-        .antenna-ball-left {
-            position: absolute;
-            top: -65px;
-            left: 23%;
-            width: 12px;
-            height: 12px;
-            background: #111;
-            border-radius: 50%;
-            z-index: 10;
-        }
-        .antenna-ball-right {
-            position: absolute;
-            top: -65px;
-            left: 75%;
-            width: 12px;
-            height: 12px;
-            background: #111;
-            border-radius: 50%;
-            z-index: 10;
-        }
-
-        .tv-screen {
-            background: #000; /* Pure black for terminal */
-            border: 4px solid #333;
-            border-radius: 40px 40px 40px 40px / 30px 30px 30px 30px; 
-            padding: 20px;
-            height: 450px; /* Taller for text */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            position: relative;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
-        }
-        
-        /* CRT Scanline effect */
-        .tv-screen::after {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(0, 255, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            z-index: 2;
-            background-size: 100% 2px, 3px 100%;
+        /* --- UI LAYER (SCARY) --- */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
             pointer-events: none;
         }
 
-        /* Controls Panel on TV Body */
-        .tv-panel-right {
-            position: absolute;
-            right: 20px;
-            top: 25px;
-            bottom: 25px;
-            width: 60px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            border-left: 2px solid #999;
-            padding-left: 10px;
+        /* FAKE WEBCAM REC */
+        #rec-overlay {
+            position: absolute; top: 20px; left: 20px; color: red;
+            font-weight: bold; font-size: 1.5rem; display: none;
+            z-index: 200; text-shadow: 0 0 10px red;
+            animation: blink 1s infinite;
         }
+        @keyframes blink { 50% { opacity: 0; } }
 
-        .knob {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #111;
-            border-radius: 50%;
-            position: relative;
-            background: #ccc;
+        /* START BUTTON */
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
             cursor: pointer;
-            transition: transform 0.2s;
         }
-        .knob::after {
-            content: '';
-            position: absolute;
-            top: 5px;
-            left: 50%;
-            width: 4px;
-            height: 12px;
-            background: #111;
+        #btn {
+            border: 4px solid red; padding: 20px 60px;
+            color: red; font-size: 2rem; letter-spacing: 5px;
+            background: black; transition: 0.2s;
+            box-shadow: 0 0 30px red; text-transform: uppercase;
+            font-weight: bold; animation: pulse-btn 1s infinite;
+        }
+        #btn:hover { background: red; color: black; }
+        @keyframes pulse-btn { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* SCARY TEXT */
+        .glitch-text {
+            font-size: 5rem; color: red; font-weight: bold;
+            text-shadow: 5px 5px 0px #330000;
+            animation: shake-text 0.1s infinite; display: none;
+            background: rgba(0,0,0,0.8); padding: 20px; border: 2px solid red;
+        }
+        
+        #ip-display {
+            position: absolute; bottom: 80px; color: red; 
+            font-size: 1.5rem; background: black; padding: 10px;
+            border: 2px solid red; display: none;
         }
 
-        .speaker-grill {
-            display: flex;
-            gap: 6px;
-            margin-top: 15px;
-            justify-content: center;
-            width: 100%;
+        /* DELETING FILES BAR */
+        #delete-bar-container {
+            position: absolute; bottom: 20px; width: 80%; height: 30px;
+            border: 2px solid red; display: none; background: #220000;
         }
-        .grill-line {
-            width: 6px;
-            height: 20px;
-            background: #111;
-            border-radius: 3px;
+        #delete-bar-fill { width: 0%; height: 100%; background: red; transition: width 0.1s; }
+        #delete-text { position: absolute; top: -30px; left: 0; color: red; font-weight: bold; }
+
+        /* --- CHAOS TERMINALS --- */
+        .terminal-popup {
+            position: absolute; background: #000; border: 4px solid red;
+            color: red; font-family: 'Lucida Console', monospace;
+            z-index: 90; padding: 5px;
+            box-shadow: 5px 5px 0px rgba(255,0,0,0.5);
+            overflow: hidden; font-weight: bold; font-size: 1rem;
+            animation: appear-flash 0.1s;
+        }
+        @keyframes appear-flash { 0% { opacity: 0; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
+
+        /* ========================================= */
+        /* --- THE ULTIMATE TECH ENDING STYLES --- */
+        /* ========================================= */
+        #funny-layer {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #050505; /* Deep Black */
+            z-index: 200; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-family: 'Poppins', sans-serif; cursor: auto;
+            opacity: 0; transition: opacity 1s ease-in;
+            overflow: hidden;
         }
 
-        .about-me-btn {
-            border: 2px solid #00ff00;
-            color: #00ff00;
-            padding: 15px 30px;
-            font-size: 2rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: rgba(0, 50, 0, 0.3);
-            font-family: 'VT323', monospace;
+        /* Neural Network Canvas Background */
+        #tech-bg-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 201; opacity: 0.3;
+        }
+
+        .tech-card {
+            position: relative; z-index: 210;
+            background: rgba(10, 20, 30, 0.7);
+            backdrop-filter: blur(15px);
+            padding: 50px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 255, 200, 0.3);
+            box-shadow: 0 0 50px rgba(0, 255, 200, 0.1);
             text-align: center;
-            text-shadow: 0 0 5px #00ff00;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
-            z-index: 10;
+            display: flex; flex-direction: column; align-items: center;
+            max-width: 600px;
+            animation: card-float 6s ease-in-out infinite;
         }
-        .about-me-btn:hover {
-            transform: scale(1.1);
-            background: rgba(0, 100, 0, 0.6);
-            box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
+        @keyframes card-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        /* Avatar Radar Effect */
+        .avatar-box {
+            position: relative; width: 130px; height: 130px;
+            border-radius: 50%; margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: center;
         }
-        
-        .call-brijesh-btn {
-            border: 2px solid #ff0000; /* Red for alert */
-            color: #ff0000;
-            padding: 15px 30px;
-            font-size: 2rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: rgba(50, 0, 0, 0.3);
-            font-family: 'VT323', monospace;
-            text-align: center;
-            text-shadow: 0 0 5px #ff0000;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
-            z-index: 10;
+        .avatar-box img {
+            width: 120px; height: 120px; border-radius: 50%; z-index: 2;
+            border: 3px solid #00ffcc;
         }
-        .call-brijesh-btn:hover {
-            transform: scale(1.1);
-            background: rgba(100, 0, 0, 0.6);
-            box-shadow: 0 0 25px rgba(255, 0, 0, 0.8);
+        .radar-sweep {
+            position: absolute; width: 100%; height: 100%;
+            border-radius: 50%; border: 2px solid rgba(0, 255, 204, 0.5);
+            animation: radar-spin 2s linear infinite;
+        }
+        .radar-sweep::before {
+            content: ''; position: absolute; top: 0; left: 50%;
+            width: 50%; height: 50%;
+            background: linear-gradient(90deg, rgba(0,255,204,0.5), transparent);
+            transform-origin: bottom left;
+        }
+        @keyframes radar-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Typewriter Text */
+        .console-text {
+            font-family: 'Share Tech Mono', monospace;
+            color: #00ffcc; font-size: 1.5rem;
+            border-right: 2px solid #00ffcc;
+            white-space: nowrap; overflow: hidden;
+            width: 0; margin-bottom: 10px;
+            animation: typing 3s steps(30, end) forwards, blink-cursor 0.75s step-end infinite;
+        }
+        @keyframes typing { from { width: 0; } to { width: 100%; } }
+        @keyframes blink-cursor { from, to { border-color: transparent; } 50% { border-color: #00ffcc; } }
+
+        .sub-msg { color: #aaa; font-weight: 300; margin-bottom: 30px; }
+
+        /* Floating 2D Tech Symbols */
+        .floating-icon {
+            position: absolute; font-size: 2rem; color: rgba(0, 255, 204, 0.2);
+            animation: float-icon 4s ease-in-out infinite; z-index: 205;
+            font-family: monospace; font-weight: bold;
+        }
+        @keyframes float-icon {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(10px, -20px) rotate(10deg); }
         }
 
-        .terminal-text {
-            background: transparent;
-            border: none;
-            padding: 20px;
-            font-family: 'VT323', monospace;
-            width: 100%;
-            height: 100%;
-            outline: none;
-            font-size: 1.4rem;
-            line-height: 1.2;
-            color: #00ff00; /* Hacker Green */
-            text-shadow: 0 0 4px rgba(0, 255, 0, 0.6);
-            resize: none;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            z-index: 5;
-            display: none; /* Hidden initially */
+        /* Tech Button */
+        .cyber-btn {
+            background: transparent; border: 2px solid #00ffcc;
+            color: #00ffcc; padding: 15px 40px; font-size: 1.1rem;
+            font-family: 'Share Tech Mono', monospace;
+            cursor: pointer; position: relative; overflow: hidden;
+            transition: 0.3s; text-decoration: none; display: inline-block;
         }
+        .cyber-btn:hover { background: #00ffcc; color: #000; box-shadow: 0 0 20px #00ffcc; }
         
-        .terminal-text.active {
-            display: block;
-        }
-        
-        /* Scrollbar for terminal */
-        .terminal-text::-webkit-scrollbar {
-            width: 10px;
-        }
-        .terminal-text::-webkit-scrollbar-track {
-            background: #000; 
-        }
-        .terminal-text::-webkit-scrollbar-thumb {
-            background: #004400; 
-            border-radius: 5px;
-        }
+        /* Shaking for scare */
+        .shaking-body { animation: violent-shake 0.1s infinite; }
+        .strobe-bg { animation: strobe 0.1s infinite; }
+        @keyframes violent-shake { 0% { transform: translate(0, 0); } 25% { transform: translate(-10px, 10px); } 50% { transform: translate(10px, -10px); } 75% { transform: translate(-10px, -10px); } 100% { transform: translate(0, 0); } }
+        @keyframes strobe { 0% { background: black; } 50% { background: #300; } 100% { background: black; } }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        /* --- Mobile Specific Adjustments (Max 640px) --- */
-        @media (max-width: 640px) {
-            
-            /* CHANGE 1: Align items to the bottom, pushing the TV towards the bottom edge */
-            #tvContainer {
-                align-items: flex-end; /* Align content to the bottom */
-                padding-bottom: 0; /* Remove padding to touch the bottom edge */
-            }
-            
-            /* CHANGE 2: Set the height of the retro-tv to cover center-to-bottom area and remove vertical translation */
-            .retro-tv {
-                height: 75vh; /* Increase height to push the top higher */
-                transform: rotate(0deg); /* Remove rotation */
-                padding: 15px; 
-                padding-right: 70px; 
-            }
-            
-            .tv-panel-right {
-                right: 10px; 
-                width: 40px; 
-                gap: 10px; 
-            }
-            
-            .knob {
-                width: 30px;
-                height: 30px;
-                border-width: 3px;
-            }
-            
-            .knob::after {
-                top: 3px;
-                height: 8px;
-                width: 3px;
-            }
-            
-            .tv-screen {
-                padding: 10px; 
-                height: 85%; /* Let the screen fill the available height within the TV box */
-                border-radius: 20px 20px 20px 20px / 15px 15px 15px 15px; 
-            }
-            
-            .terminal-text {
-                font-size: 1.1rem; 
-            }
-            
-            .about-me-btn, .call-brijesh-btn {
-                padding: 10px 20px;
-                font-size: 1.5rem;
-            }
-            
-            /* Repositioning fixed text for mobile */
-            .absolute.top-8.left-8 {
-                top: 4px;
-                left: 4px;
-                transform: rotate(0deg);
-            }
-        }
     </style>
 </head>
-<body class="w-full h-screen flex flex-col items-center justify-center relative">
+<body>
 
-    <div class="absolute top-8 left-8 transform -rotate-2 select-none pointer-events-none z-50 mix-blend-difference text-white">
-        <h1 class="text-4xl" style="color: #000; text-shadow: 0 0 5px white;">brijeshzzzz engine</h1>
+    <div id="start-screen" onclick="startPrank()">
+        <div id="btn">INITIATE SEQUENCE</div>
     </div>
 
-    <canvas id="scribbleCanvas" class="w-full h-full absolute inset-0 z-0"></canvas>
+    <canvas id="warp-canvas"></canvas>
 
-    <div id="tvContainer">
-        <div class="retro-tv">
-            <div class="antenna-ball-left"></div>
-            <div class="antenna-ball-right"></div>
+    <div id="rec-overlay">🔴 REC [LIVE]</div>
 
-            <div class="tv-screen" id="screenContent">
-                <div id="aboutBtnContainer" class="flex flex-col items-center justify-center h-full w-full">
-                    <div class="about-me-btn" onclick="startTerminal()">
-                        > ./ABOUT_ME.sh
-                    </div>
-                </div>
-                
-                <textarea id="terminalOutput" class="terminal-text" readonly></textarea>
-                
-                <div id="emergencyScreen" class="absolute inset-0 bg-black flex-col items-center justify-center p-8 hidden text-red-500 font-mono text-center text-xl" style="font-family: 'VT323', monospace;">
-                    <div class="flex flex-col gap-6 w-full items-center">
-                        <span class="text-3xl text-red-500 mb-4 animate-pulse">!!! ALERT: SYSTEM COMPROMISED !!!</span>
-                        
-                        <p class="text-2xl text-red-400">
-                            SOMETHING GOT HACKED!
-                        </p>
-                        <p class="text-red-300">
-                            SECURITY PROTOCOLS FAILED.
-                        </p>
-                        
-                        <div class="mt-8">
-                            <p class="text-green-500 mb-4 text-3xl">CALL BRIJESH TO SOLVE</p>
-                            <div class="call-brijesh-btn" onclick="redirectToIndex()">
-                                CALL BRIJESH
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tv-panel-right">
-                <div class="knob" style="transform: rotate(45deg);"></div>
-                <div class="knob" style="transform: rotate(120deg);"></div>
-                <div class="speaker-grill" style="flex-direction: column; gap: 4px;">
-                    <div class="grill-line" style="width: 40px; height: 4px;"></div>
-                    <div class="grill-line" style="width: 40px; height: 4px;"></div>
-                    <div class="grill-line" style="width: 40px; height: 4px;"></div>
-                </div>
-            </div>
+    <div id="ui-layer">
+        <div class="glitch-text" id="main-text">SYSTEM OVERLOAD</div>
+        <div id="ip-display">GEOLOCATION LOCKED...</div>
+        <div id="delete-bar-container">
+            <div id="delete-text">DELETING C:/WINDOWS/SYSTEM32...</div>
+            <div id="delete-bar-fill"></div>
         </div>
     </div>
 
-    <div class="z-10 absolute top-12 sm:bottom-12 sm:top-auto flex flex-col items-center gap-4">
+    <div id="funny-layer">
+        <canvas id="tech-bg-canvas"></canvas>
         
-        <button id="startBtn" class="sketch-btn px-8 py-4 text-2xl rounded-sm bg-white border-white">
-            START ENGINE
-        </button>
+        <div class="floating-icon" style="top:20%; left:20%; animation-delay:0s;">&lt;/&gt;</div>
+        <div class="floating-icon" style="top:70%; left:80%; animation-delay:1s;">{ }</div>
+        <div class="floating-icon" style="top:10%; right:15%; animation-delay:2s;">;</div>
+        <div class="floating-icon" style="bottom:15%; left:30%; animation-delay:1.5s;">01</div>
+        <div class="floating-icon" style="top:50%; right:10%; animation-delay:0.5s;">#</div>
+
+        <div class="tech-card">
+            <div class="avatar-box">
+                <div class="radar-sweep"></div>
+                <img src="https://cdn-icons-png.flaticon.com/512/4333/4333609.png" alt="Tech Avatar">
+            </div>
+            
+            <div class="console-text">console.log("Sorry! Wrong Link!");</div>
+            
+            <p class="sub-msg">
+                I think I clicked the wrong button...<br>
+                Your system is safe. It was just a simulation.
+            </p>
+
+            <a href="structure.html" class="cyber-btn">
+                [ ACCESS_MY_PROFILE ]
+            </a>
+        </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('scribbleCanvas');
+        // --- CONFIG ---
+        const startScreen = document.getElementById('start-screen');
+        const funnyLayer = document.getElementById('funny-layer');
+        const mainText = document.getElementById('main-text');
+        const ipDisplay = document.getElementById('ip-display');
+        const deleteContainer = document.getElementById('delete-bar-container');
+        const deleteFill = document.getElementById('delete-bar-fill');
+        const recOverlay = document.getElementById('rec-overlay');
+        
+        let audioCtx;
+        let oscillators = [];
+        let escapeCount = 0;
+        let animationId;
+        let heartRate = 1000; 
+        let heartInterval;
+        let chaosInterval; 
+        let deleteInterval;
+        
+        // --- 1. THE RED 3D TUNNEL (CANVAS) ---
+        const canvas = document.getElementById('warp-canvas');
         const ctx = canvas.getContext('2d');
-        const startBtn = document.getElementById('startBtn');
-        // Removed const statusText = document.getElementById('statusText');
-        const tvContainer = document.getElementById('tvContainer');
-        const aboutBtnContainer = document.getElementById('aboutBtnContainer');
-        const terminalOutput = document.getElementById('terminalOutput');
-        const emergencyScreen = document.getElementById('emergencyScreen');
-
         let width, height;
-        let isRunning = false;
-        let isExploded = false;
-        let rpm = 0;
-        let vibration = 0;
-        let blastTimer = null;
-        let sootLevel = 0; 
-        let shockwaveRadius = 0; 
-        let alarmInterval = null; // New variable for the alarm sound interval
-        
-        const JITTER_AMOUNT = 1.5; 
-        const LINE_WIDTH_BASE = 2.5;
-        
-        let crankAngle = 0;
-        let particles = [];
-
-        // --- Audio Context & Sound Generation ---
-        let audioCtx = null;
-        let noiseBuffer = null;
-
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                // Create a noise buffer
-                const bufferSize = audioCtx.sampleRate * 2; 
-                noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = noiseBuffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        }
-
-        // 1. VINTAGE MECHANICAL KEYBOARD SOUND
-        function playTypingSound() {
-            initAudio();
-            const t = audioCtx.currentTime;
-
-            // "Thock" (Low frequency body)
-            const thud = audioCtx.createOscillator();
-            thud.type = 'sine';
-            thud.frequency.setValueAtTime(150, t);
-            thud.frequency.exponentialRampToValueAtTime(50, t + 0.05);
-            
-            const thudGain = audioCtx.createGain();
-            thudGain.gain.setValueAtTime(0.3, t);
-            thudGain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
-            
-            thud.connect(thudGain);
-            thudGain.connect(audioCtx.destination);
-            thud.start(t);
-            thud.stop(t + 0.05);
-
-            // "Click" (High frequency plastic snap)
-            const click = audioCtx.createOscillator();
-            click.type = 'square';
-            click.frequency.setValueAtTime(1200, t);
-            click.frequency.exponentialRampToValueAtTime(600, t + 0.03);
-            
-            const clickGain = audioCtx.createGain();
-            clickGain.gain.setValueAtTime(0.1, t);
-            clickGain.gain.exponentialRampToValueAtTime(0.01, t + 0.03);
-
-            click.connect(clickGain);
-            clickGain.connect(audioCtx.destination);
-            click.start(t);
-            click.stop(t + 0.03);
-            
-            // "Scratch" (Noise texture)
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = noiseBuffer;
-            const noiseGain = audioCtx.createGain();
-            noiseGain.gain.setValueAtTime(0.2, t);
-            noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.04);
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = "highpass";
-            filter.frequency.value = 1000;
-            
-            noise.connect(filter);
-            filter.connect(noiseGain);
-            noiseGain.connect(audioCtx.destination);
-            noise.start(t);
-            noise.stop(t + 0.04);
-        }
-
-        // 2. SUPERCAR ENGINE START SOUND (FM Synthesis)
-        function playEngineStartSound() {
-            initAudio();
-            const t = audioCtx.currentTime;
-
-            // Main "Scream" (FM Carrier)
-            const carrier = audioCtx.createOscillator();
-            carrier.type = 'sawtooth';
-            carrier.frequency.setValueAtTime(50, t);
-            // Revving up fast to high RPM
-            carrier.frequency.exponentialRampToValueAtTime(600, t + 2.5); 
-            
-            // "Growl" (FM Modulator)
-            const modulator = audioCtx.createOscillator();
-            modulator.type = 'square';
-            modulator.frequency.setValueAtTime(25, t);
-            modulator.frequency.exponentialRampToValueAtTime(300, t + 2.5);
-            
-            const modGain = audioCtx.createGain();
-            modGain.gain.setValueAtTime(100, t);
-            modGain.gain.linearRampToValueAtTime(500, t + 2.5);
-            
-            // Detuned sub-oscillator for thickness
-            const sub = audioCtx.createOscillator();
-            sub.type = 'sawtooth';
-            sub.frequency.setValueAtTime(48, t);
-            sub.frequency.exponentialRampToValueAtTime(590, t + 2.5);
-
-            // Routing FM
-            modulator.connect(modGain);
-            modGain.connect(carrier.frequency); // Modulate carrier pitch
-
-            // Master volume for engine
-            const masterGain = audioCtx.createGain();
-            masterGain.gain.setValueAtTime(0, t);
-            masterGain.gain.linearRampToValueAtTime(0.3, t + 0.2); // Attack
-            masterGain.gain.setValueAtTime(0.3, t + 2.5); // Sustain
-            masterGain.gain.linearRampToValueAtTime(0, t + 3.5); // Release
-
-            carrier.connect(masterGain);
-            sub.connect(masterGain);
-            masterGain.connect(audioCtx.destination);
-
-            carrier.start(t);
-            modulator.start(t);
-            sub.start(t);
-            
-            carrier.stop(t + 3.5);
-            modulator.stop(t + 3.5);
-            sub.stop(t + 3.5);
-        }
-
-        // 3. EXPLOSION SOUND
-        function playBlastSound() {
-            initAudio();
-            const t = audioCtx.currentTime;
-
-            // White Noise Burst
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = noiseBuffer;
-            
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(3000, t);
-            filter.frequency.exponentialRampToValueAtTime(20, t + 2.0); // Sweep down
-            
-            const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(1.0, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 2.5);
-
-            noise.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-            noise.start(t);
-            noise.stop(t + 2.5);
-
-            // Sub-bass Impact
-            const sub = audioCtx.createOscillator();
-            sub.type = 'sine';
-            sub.frequency.setValueAtTime(120, t);
-            sub.frequency.exponentialRampToValueAtTime(10, t + 1.5);
-            const subGain = audioCtx.createGain();
-            subGain.gain.setValueAtTime(1.0, t);
-            subGain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
-            
-            sub.connect(subGain);
-            subGain.connect(audioCtx.destination);
-            sub.start(t);
-            sub.stop(t + 1.5);
-        }
-        
-        // 4. ALARM SOUND (High-pitched repeating beep)
-        function playAlarmSound() {
-            initAudio();
-            // Stop any existing alarm
-            if(alarmInterval) clearInterval(alarmInterval);
-
-            const beep = () => {
-                const t = audioCtx.currentTime;
-                
-                // Primary high-frequency tone
-                const osc = audioCtx.createOscillator();
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(880, t); // A5 note
-
-                // Volume envelope (quick attack, quick decay)
-                const gain = audioCtx.createGain();
-                gain.gain.setValueAtTime(0.5, t);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15); // Short duration beep
-                
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                osc.start(t);
-                osc.stop(t + 0.15);
-            };
-
-            // Start the beeping loop
-            beep();
-            alarmInterval = setInterval(beep, 500); // Repeat every 500ms
-        }
-
-        // --- Bio Content ---
-        const fullBioText = `root@brijeshzzzz:~# cat bio.txt
-
-Hey! I'm Brijesh — a developer with a strong crush on cybersecurity.
-
-I’m not a “hack the bank” guy… 
-I’m the “secure the system before someone else messes it up” guy 😎
-
-[🛡️] Cybersecurity Enthusiast 
-     I break things only to understand them and fix them.
-
-[💻] Linux is my playground, terminal is my second home.
-
-[🕵️] Ethical hacker mindset: 
-     “Don’t trust anything… even my own code 😂”
-
-[⚙️] Love building clean UIs, fast websites, and testing security the right way.
-
-[🧠] Sometimes I debug like a pro, sometimes I stare at the terminal for 20 minutes.
-
-[😌] Calm outside… inside running 42 tabs, 3 terminals, and 0 patience.
-
-[🚀] Learning DevOps + Cloud so I can hack trees (jk jk).
-
-------------------------------------------------
-Basically: I’m a techie who codes, secures, learns, laughs, and doesn’t break the law.
-
-Cyber guy but in a cool, responsible way — not the jail-type.
-_`;
-
-        let typingInterval = null;
-
-        // --- UI Functions ---
-        function showEmergencyScreen() {
-            // FIX 1: Ensure typing interval is cleared immediately
-            if(typingInterval) clearInterval(typingInterval);
-            
-            // FIX 2: Explicitly hide the terminal output (textarea)
-            terminalOutput.classList.remove('active');
-            
-            // FIX 3: Clear any lingering text from the terminal output
-            terminalOutput.value = '';
-
-            emergencyScreen.style.display = 'flex';
-            
-            // Trigger the alarm sound when the emergency message appears
-            playAlarmSound();
-        }
-        
-        function startTerminal() {
-            // Ensure audio context is ready
-            initAudio();
-
-            aboutBtnContainer.style.display = 'none';
-            emergencyScreen.style.display = 'none';
-            terminalOutput.classList.add('active');
-            terminalOutput.value = "";
-            
-            let charIndex = 0;
-            
-            typingInterval = setInterval(() => {
-                if (charIndex < fullBioText.length) {
-                    let currentText = terminalOutput.value;
-                    if(currentText.endsWith('_')) {
-                        currentText = currentText.slice(0, -1);
-                    }
-                    
-                    let nextChar = fullBioText.charAt(charIndex);
-                    
-                    if (nextChar === '_') {
-                         terminalOutput.value = currentText + '_'; 
-                         // End of typing, show emergency screen after a brief delay
-                         setTimeout(showEmergencyScreen, 1500);
-                         clearInterval(typingInterval);
-                         return;
-                    }
-                    
-                    terminalOutput.value = currentText + nextChar + '_'; 
-                    
-                    // Play typewriter sound
-                    if (nextChar.trim() !== '') {
-                        playTypingSound();
-                    }
-                    
-                    charIndex++;
-                    terminalOutput.scrollTop = terminalOutput.scrollHeight;
-                } else {
-                    clearInterval(typingInterval);
-                    // Fallback to ensure emergency screen is shown if timer completes unexpectedly
-                    showEmergencyScreen();
-                }
-            }, 40); // Slightly slower for better audio feedback
-        }
-        
-        // Function now contains the standard redirection command
-        function redirectToIndex() {
-            // Stop the alarm when the user clicks the button
-            if(alarmInterval) clearInterval(alarmInterval);
-
-            // 🌟🌟🌟 UPDATED TO POINT TO structure.html 🌟🌟🌟
-            window.location.href = './structure.html'; 
-            
-            // The following state reset is kept as a fallback/simulation 
-            // in constrained environments (like this Canvas).
-            
-            // Reset state variables
-            isRunning = false;
-            isExploded = false;
-            rpm = 0;
-            sootLevel = 0;
-            shockwaveRadius = 0;
-            particles = [];
-            
-            // Clear any timers
-            clearTimeout(blastTimer);
-            if(typingInterval) clearInterval(typingInterval);
-            
-            // Reset UI elements
-            tvContainer.style.display = 'none';
-            emergencyScreen.style.display = 'none';
-            terminalOutput.classList.remove('active');
-            aboutBtnContainer.style.display = 'flex'; // Show initial button
-            
-            startBtn.innerText = "START ENGINE";
-            startBtn.classList.remove('bg-black', 'text-white');
-            startBtn.classList.add('bg-white', 'border-white');
-            // Removed statusText related reset
-            
-            // Force a canvas redraw to clear the soot immediately
-            drawScene(); 
-        }
-
-
-        // --- Scribble Drawing Primitives ---
-        function drawScribbleLine(x1, y1, x2, y2, roughness = 1) {
-            ctx.beginPath();
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.moveTo(x1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness, y1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness);
-            ctx.lineTo(x2 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness, y2 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness);
-            ctx.moveTo(x1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness, y1 + (Math.random() - 0.5) * JITTER_AMOUNT * roughness);
-            ctx.bezierCurveTo((x1+x2)/2 + (Math.random() - 0.5)*5, (y1+y2)/2 + (Math.random() - 0.5)*5, (x1+x2)/2 + (Math.random() - 0.5)*5, (y1+y2)/2 + (Math.random() - 0.5)*5, x2 + (Math.random() - 0.5)*JITTER_AMOUNT*roughness, y2 + (Math.random() - 0.5)*JITTER_AMOUNT*roughness);
-            ctx.stroke();
-        }
-
-        function drawScribbleRect(x, y, w, h) {
-            drawScribbleLine(x, y, x + w, y);
-            drawScribbleLine(x + w, y, x + w, y + h);
-            drawScribbleLine(x + w, y + h, x, y + h);
-            drawScribbleLine(x, y + h, x, y);
-        }
-
-        function drawScribbleCircle(x, y, r) {
-            ctx.beginPath();
-            const segments = 12;
-            const step = (Math.PI * 2) / segments;
-            for(let i = 0; i <= segments; i++) {
-                const theta = i * step;
-                const px = x + Math.cos(theta) * r + (Math.random() - 0.5) * JITTER_AMOUNT;
-                const py = y + Math.sin(theta) * r + (Math.random() - 0.5) * JITTER_AMOUNT;
-                if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-            }
-            ctx.lineTo(x + r + (Math.random()-0.5)*2, y + (Math.random()-0.5)*2);
-            ctx.stroke();
-        }
-
-        // --- Engine Component ---
-
-        function triggerBlast() {
-            isExploded = true;
-            isRunning = false;
-            shockwaveRadius = 10; 
-            
-            playBlastSound(); // AUDIO TRIGGER
-
-            // Blast Particles
-            for(let i=0; i<80; i++) {
-                const speed = 15 + Math.random() * 30;
-                const angle = Math.random() * Math.PI * 2;
-                particles.push({
-                    x: width/2, 
-                    y: height/2 + 50,
-                    vx: Math.cos(angle) * speed,
-                    vy: Math.sin(angle) * speed,
-                    life: 2.0 + Math.random(),
-                    size: 20 + Math.random() * 60,
-                    isDebris: Math.random() > 0.6,
-                    rotation: Math.random() * Math.PI
-                });
-            }
-            
-            // Removed statusText update: statusText.innerText = "CRITICAL FAILURE!";
-            // Removed statusText style update
-        }
-
-        function updateEngine() {
-            if (isRunning) {
-                const desired = 250; 
-                rpm += (desired - rpm) * 0.05;
-            } else if (isExploded) {
-                 rpm = 0; 
-                 // Fast blackout
-                 if(sootLevel < 1.0) sootLevel += 0.03; 
-                 else {
-                     // SHOW TV when black (centered due to flex in CSS)
-                     tvContainer.style.display = 'flex'; 
-                 }
-                 
-                 shockwaveRadius += 50;
-            } else {
-                rpm *= 0.95;
-                if (rpm < 0.1) rpm = 0;
-            }
-
-            crankAngle += rpm * 0.01;
-            vibration = isExploded ? 0 : (rpm / 100) * 2;
-
-            if (isRunning && rpm > 5) {
-                const bubbleCount = 2 + Math.floor(rpm / 50);
-                const pipeX = width/2 + 120;
-                const pipeY = (height/2 + 50) - 220;
-
-                for(let k=0; k < bubbleCount; k++) {
-                    particles.push({
-                        x: pipeX + (Math.random() - 0.5) * 5, 
-                        y: pipeY + (Math.random() - 0.5) * 5,
-                        vx: 1 + Math.random() * 2,
-                        vy: -2 - Math.random() * 2,
-                        life: 1.0,
-                        size: 3 + Math.random() * 4,
-                        isDebris: false,
-                        rotation: 0
-                    });
-                }
-            }
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.rotation += 0.1;
-                
-                if(p.isDebris) {
-                    p.vx *= 0.95; p.vy += 0.5; p.life -= 0.01;
-                } else {
-                    if(isExploded) p.size += 1.5; 
-                    else { p.size += 0.1; p.vx += (Math.random() - 0.5) * 0.5; }
-                    p.life -= 0.02; p.vx *= 0.95; p.vy *= 0.95; p.vy -= 0.05;
-                }
-                if (p.life <= 0) particles.splice(i, 1);
-            }
-        }
-
-        function drawScene() {
-            // If fully blacked out, just draw black
-            if (sootLevel >= 1.0) {
-                ctx.fillStyle = "black";
-                ctx.fillRect(0, 0, width, height);
-                return;
-            }
-
-            ctx.clearRect(0, 0, width, height);
-
-            ctx.save();
-            let shakeX = (Math.random() - 0.5) * vibration * 5;
-            let shakeY = (Math.random() - 0.5) * vibration * 5;
-            
-            if (isExploded && shockwaveRadius < width) {
-                shakeX = (Math.random() - 0.5) * 50; 
-                shakeY = (Math.random() - 0.5) * 50;
-            }
-            
-            ctx.translate(shakeX, shakeY);
-            ctx.lineWidth = LINE_WIDTH_BASE;
-            ctx.strokeStyle = '#000000';
-
-            const cx = width / 2;
-            const cy = height / 2 + 50; 
-
-            if (!isExploded || sootLevel < 0.5) {
-                ctx.lineWidth = 4;
-                drawScribbleLine(100, cy + 100, width - 100, cy + 100);
-                
-                ctx.lineWidth = 3;
-                drawScribbleRect(cx - 70, cy - 50, 140, 100);
-                drawScribbleCircle(cx - 60, cy + 40, 4);
-                drawScribbleCircle(cx + 60, cy + 40, 4);
-                drawScribbleRect(cx - 55, cy - 160, 110, 110);
-                for(let i=0; i<6; i++) {
-                    const fy = cy - 150 + (i * 18);
-                    drawScribbleLine(cx - 65, fy, cx + 65, fy);
-                }
-                drawScribbleRect(cx - 60, cy - 210, 120, 50);
-                
-                const crankRadius = 35;
-                const pistonYBase = cy - 110;
-                const crankPinX = cx + Math.cos(crankAngle) * crankRadius;
-                const crankPinY = cy + Math.sin(crankAngle) * crankRadius;
-                const pistonOffset = Math.sin(crankAngle) * crankRadius;
-                const pistonY = pistonYBase + pistonOffset;
-
-                ctx.lineWidth = 2;
-                drawScribbleLine(cx, cy, crankPinX, crankPinY);
-                drawScribbleCircle(cx, cy, 5);
-                drawScribbleLine(crankPinX, crankPinY, cx, pistonY);
-                ctx.lineWidth = 3;
-                drawScribbleRect(cx - 45, pistonY - 40, 90, 40);
-                drawScribbleCircle(cx, pistonY - 20, 4);
-                drawScribbleLine(cx - 45, pistonY - 35, cx + 45, pistonY - 35);
-
-                const valveMove = Math.sin(crankAngle * 0.5) * 8;
-                drawScribbleLine(cx - 60, cy - 190, cx - 100, cy - 190);
-                drawScribbleRect(cx - 130, cy - 210, 30, 40);
-                drawScribbleLine(cx + 60, cy - 190, cx + 100, cy - 190);
-                drawScribbleLine(cx + 100, cy - 190, cx + 120, cy - 220);
-                drawScribbleCircle(cx + 120, cy - 220, 12);
-                ctx.lineWidth = 2;
-                drawScribbleLine(cx - 20, cy - 210, cx - 20, cy - 190 + valveMove);
-                drawScribbleLine(cx - 30, cy - 190 + valveMove, cx - 10, cy - 190 + valveMove);
-                drawScribbleLine(cx + 20, cy - 210, cx + 20, cy - 190 - valveMove);
-                drawScribbleLine(cx + 10, cy - 190 - valveMove, cx + 30, cy - 190 - valveMove);
-                drawScribbleRect(cx - 5, cy - 230, 10, 20);
-
-                ctx.lineWidth = 2;
-                drawScribbleCircle(cx - 110, cy, 70);
-                ctx.save();
-                ctx.translate(cx - 110, cy);
-                ctx.rotate(crankAngle);
-                for(let i=0; i<3; i++) {
-                    ctx.rotate(Math.PI * 2 / 3);
-                    drawScribbleLine(0, 0, 0, 70);
-                }
-                drawScribbleCircle(0, 0, 5);
-                ctx.restore();
-
-                const fanX = cx + 140;
-                const fanY = cy;
-                ctx.beginPath();
-                ctx.moveTo(cx + 40, cy + 20); ctx.lineTo(fanX, fanY + 20); ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(cx + 40, cy - 20); ctx.lineTo(fanX, fanY - 20); ctx.stroke();
-
-                ctx.save();
-                ctx.translate(fanX, fanY);
-                ctx.rotate(crankAngle * 2);
-                for(let i=0; i<4; i++) {
-                    ctx.rotate(Math.PI/2);
-                    drawScribbleRect(-5, -40, 10, 40);
-                }
-                drawScribbleCircle(0, 0, 10);
-                ctx.restore();
-
-                if (isRunning && Math.abs(Math.sin(crankAngle)) > 0.9) {
-                    ctx.strokeStyle = '#000000';
-                    drawScribbleLine(cx, cy - 200, cx - 10, cy - 190);
-                    drawScribbleLine(cx, cy - 200, cx + 10, cy - 190);
-                }
-            }
-            
-            if (isExploded && shockwaveRadius < width * 1.5) {
-                ctx.beginPath();
-                ctx.arc(cx, cy, shockwaveRadius, 0, Math.PI * 2);
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 5 + Math.random() * 5;
-                ctx.stroke();
-            }
-
-            particles.forEach(p => {
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.rotation);
-                
-                if (p.isDebris) {
-                    ctx.fillStyle = 'black';
-                    ctx.beginPath();
-                    ctx.rect(-p.size/2, -p.size/2, p.size, p.size/4); 
-                    ctx.fill();
-                } else {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-                    ctx.fillStyle = 'black';
-                    ctx.fill();
-                    if(p.size < 15 && !isExploded) {
-                        ctx.beginPath();
-                        ctx.arc(-p.size*0.3, -p.size*0.3, p.size * 0.3, 0, Math.PI * 2);
-                        ctx.fillStyle = 'white';
-                        ctx.fill();
-                    }
-                    if(isExploded) {
-                         ctx.beginPath();
-                         ctx.arc(0, 0, p.size * 0.8, 0, Math.PI * 2);
-                         ctx.strokeStyle = 'white';
-                         ctx.lineWidth = 2;
-                         ctx.stroke();
-                    }
-                }
-                ctx.restore();
-            });
-
-            ctx.restore();
-            
-            if (sootLevel > 0) {
-                ctx.fillStyle = `rgba(0, 0, 0, ${sootLevel})`;
-                ctx.fillRect(0, 0, width, height);
-            }
-        }
+        let stars = [];
+        const numStars = 1500; 
+        const speed = 40; 
 
         function resize() {
-            width = window.innerWidth;
-            height = window.innerHeight;
-            canvas.width = width;
-            canvas.height = height;
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            ctx.translate(width/2, height/2);
         }
-
-        function animate() {
-            updateEngine();
-            drawScene();
-            requestAnimationFrame(animate);
-        }
-
         window.addEventListener('resize', resize);
+
+        class Star {
+            constructor() {
+                this.x = (Math.random() - 0.5) * width * 2;
+                this.y = (Math.random() - 0.5) * height * 2;
+                this.z = Math.random() * width;
+                this.pz = this.z;
+            }
+            update() {
+                this.z = this.z - speed;
+                if (this.z < 1) {
+                    this.z = width;
+                    this.x = (Math.random() - 0.5) * width * 2;
+                    this.y = (Math.random() - 0.5) * height * 2;
+                    this.pz = this.z;
+                }
+            }
+            show() {
+                let sx = (this.x / this.z) * width;
+                let sy = (this.y / this.z) * height;
+                let px = (this.x / this.pz) * width;
+                let py = (this.y / this.pz) * height;
+                this.pz = this.z;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.lineTo(px, py);
+                ctx.strokeStyle = "#ff0000"; 
+                ctx.lineWidth = (1 - this.z / width) * 6; 
+                ctx.stroke();
+            }
+        }
         resize();
+        for(let i=0; i<numStars; i++) stars.push(new Star());
+        function animateTunnel() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; 
+            ctx.fillRect(-width/2, -height/2, width, height);
+            stars.forEach(star => { star.update(); star.show(); });
+            animationId = requestAnimationFrame(animateTunnel);
+        }
 
-        startBtn.addEventListener('click', () => {
-            if (!isRunning && !isExploded) {
-                initAudio(); // IMPORTANT: Init audio on user interaction
-                playEngineStartSound(); // AUDIO TRIGGER
+        // --- 2. AUDIO ENGINE ---
+        function playBeat() {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+        function startHeartbeat() {
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            function beat() {
+                playBeat();
+                heartRate = Math.max(80, heartRate - 60); 
+                heartInterval = setTimeout(beat, heartRate);
+            }
+            beat();
+        }
+        function playScreech() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+            
+            const lfo = audioCtx.createOscillator();
+            lfo.type = 'square';
+            lfo.frequency.value = 25;
+            const lfoGain = audioCtx.createGain();
+            lfoGain.gain.value = 1000;
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc.frequency);
+            lfo.start();
 
-                isRunning = true;
-                startBtn.innerText = "WARNING: UNSTABLE";
-                startBtn.classList.add('bg-black', 'text-white');
-                startBtn.classList.remove('bg-white', 'border-white');
-                // Removed statusText update: statusText.innerText = "Status: PRESSURE BUILDING...";
-                // Removed statusText style update
-                blastTimer = setTimeout(triggerBlast, 3000);
-            } else if (isRunning) {
-                isRunning = false;
-                clearTimeout(blastTimer);
-                startBtn.innerText = "START ENGINE";
-                startBtn.classList.remove('bg-black', 'text-white');
-                startBtn.classList.add('bg-white', 'border-white');
-                // Removed statusText update: statusText.innerText = "Status: Stopping...";
-                // Removed statusText style update
+            gain.gain.value = 0.5;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            oscillators.push(osc);
+            oscillators.push(lfo);
+        }
+        function stopSound() {
+            clearTimeout(heartInterval);
+            oscillators.forEach(o => { try{o.stop();}catch(e){} });
+        }
+
+        // --- 3. CHAOS LOGIC ---
+        function spawnChaosWindow() {
+            const div = document.createElement('div');
+            div.className = 'terminal-popup';
+            const w = Math.floor(Math.random() * 300 + 200);
+            const h = Math.floor(Math.random() * 150 + 50);
+            const x = Math.floor(Math.random() * (window.innerWidth - w));
+            const y = Math.floor(Math.random() * (window.innerHeight - h));
+            div.style.width = w + 'px'; div.style.height = h + 'px';
+            div.style.left = x + 'px'; div.style.top = y + 'px';
+            const msgs = ["CRITICAL_PROCESS_DIED", "DELETING_SYSTEM_32", "OVERRIDE_FAILED", "FATAL_ERROR", "ROOT_ACCESS_GRANTED"];
+            let content = "C:\\WIN\\SYS32> run.exe<br>";
+            for(let i=0; i<4; i++) content += `> ${msgs[Math.floor(Math.random() * msgs.length)]}<br>`;
+            div.innerHTML = content;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 150);
+        }
+
+        // --- 4. ENDING BG ANIMATION (NEURAL NETWORK) ---
+        function startTechBg() {
+            const c = document.getElementById('tech-bg-canvas');
+            const cx = c.getContext('2d');
+            c.width = window.innerWidth;
+            c.height = window.innerHeight;
+            let nodes = [];
+            for(let i=0; i<50; i++) {
+                nodes.push({
+                    x: Math.random()*c.width, y: Math.random()*c.height,
+                    vx: (Math.random()-0.5), vy: (Math.random()-0.5)
+                });
+            }
+            function drawNodes() {
+                cx.clearRect(0,0,c.width,c.height);
+                cx.fillStyle = "#00ffcc";
+                cx.strokeStyle = "rgba(0, 255, 204, 0.2)";
+                for(let i=0; i<nodes.length; i++) {
+                    let n = nodes[i];
+                    n.x += n.vx; n.y += n.vy;
+                    if(n.x<0||n.x>c.width) n.vx*=-1;
+                    if(n.y<0||n.y>c.height) n.vy*=-1;
+                    cx.beginPath(); cx.arc(n.x, n.y, 2, 0, Math.PI*2); cx.fill();
+                    for(let j=i+1; j<nodes.length; j++) {
+                        let n2 = nodes[j];
+                        let dist = Math.hypot(n.x-n2.x, n.y-n2.y);
+                        if(dist < 150) {
+                            cx.beginPath(); cx.moveTo(n.x, n.y); cx.lineTo(n2.x, n2.y); cx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(drawNodes);
+            }
+            drawNodes();
+        }
+
+        // --- 5. SEQUENCER ---
+        function startPrank() {
+            startScreen.style.display = 'none';
+            document.body.style.cursor = 'none';
+            if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+            animateTunnel();
+            startHeartbeat();
+            setTimeout(() => { mainText.style.display = 'block'; recOverlay.style.display = 'block'; }, 2000);
+            setTimeout(() => { ipDisplay.style.display = 'block'; ipDisplay.innerText = "TARGET LOCKED: 192.168.0.666"; }, 4000);
+            setTimeout(() => { triggerScare(); }, 8000);
+        }
+
+        function triggerScare() {
+            playScreech();
+            document.body.classList.add('shaking-body');
+            document.body.classList.add('strobe-bg');
+            chaosInterval = setInterval(spawnChaosWindow, 40); 
+            mainText.innerText = "SYSTEM FAILURE";
+            mainText.style.fontSize = "6rem";
+            ipDisplay.innerText = "DATA CORRUPTION IMMINENT";
+            deleteContainer.style.display = 'block';
+            let width = 0;
+            deleteInterval = setInterval(() => {
+                width++; deleteFill.style.width = width + "%"; if(width>100) width=0;
+            }, 50);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if(e.key === "Escape") {
+                if(escapeCount === 0) {
+                    escapeCount = 1; triggerScare(); mainText.innerText = "ESCAPE FAILED";
+                } else {
+                    showTechEnding();
+                }
             }
         });
 
-        animate();
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && escapeCount === 0) { escapeCount = 1; triggerScare(); }
+        });
+
+        function showTechEnding() {
+            stopSound();
+            cancelAnimationFrame(animationId);
+            clearInterval(chaosInterval);
+            clearInterval(deleteInterval);
+            document.body.classList.remove('shaking-body');
+            document.body.classList.remove('strobe-bg');
+            document.getElementById('ui-layer').style.display = 'none';
+            canvas.style.display = 'none';
+            recOverlay.style.display = 'none';
+            document.querySelectorAll('.terminal-popup').forEach(el => el.remove());
+
+            // START TECH ENDING
+            funnyLayer.style.display = 'flex';
+            setTimeout(() => { funnyLayer.style.opacity = '1'; }, 50);
+            document.body.style.cursor = 'auto';
+            startTechBg();
+        }
+
     </script>
 </body>
 </html>
